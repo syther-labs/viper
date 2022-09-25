@@ -2,7 +2,7 @@ import utils from "../utils";
 
 import ChartWorker from "./modules/chart?worker";
 import dimensions from "../local-state/dimensions";
-import Instructions from "../local-state/instructions";
+import Instructions from "../local-state/Instructions";
 import state from "../state";
 
 const j = (d) => JSON.parse(JSON.stringify(d));
@@ -13,12 +13,23 @@ const workers = {
 };
 const resolveQueue = {};
 
-let instructions = Instructions;
+export let instructions = Instructions;
 let isRequestingToGenerateAllInstructions = false;
 let isGeneratingAllInstrutions = false;
 
-function createWorker() {
-  let worker = new ChartWorker({ type: "module" });
+/**
+ * Create a new JavaScript worker of type
+ * @param {('chart')} type 
+ * @returns 
+ */
+function createWorker(type = "") {
+  let worker
+  
+  if (type === "chart") {
+    worker = new ChartWorker({ type: "module" });
+  } else {
+    throw new Error(`No valid implementation for ${type} worker`)
+  }
   worker.onmessage = onWorkerMessage.bind(this);
   worker.onerror = onWorkerError.bind(this);
 

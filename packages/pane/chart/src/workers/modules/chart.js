@@ -4,7 +4,7 @@ import utils from "../../utils";
 import math from "../../viper-script/math";
 import ScriptFunctions from "../../viper-script/script-functions";
 
-import Instructions from "../../local-state/instructions";
+import Instructions from "../../local-state/Instructions";
 import Calculations from "../calculations";
 import Generators from "../generators";
 

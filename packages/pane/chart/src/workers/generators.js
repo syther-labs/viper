@@ -322,7 +322,7 @@ export default {
 
         const range = new Decimal(max - min);
         const exp = new Decimal(+range.toExponential().split("e")[1]);
-        const interval = new Decimal(10).pow(exp);
+        let interval = new Decimal(10).pow(exp);
 
         const baseInterval = new Decimal(interval);
         let i = 1;

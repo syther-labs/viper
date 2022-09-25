@@ -12,7 +12,7 @@ export default function xScale() {
         height: `${dimensions.xScale.height.get()}px`,
       }}
     >
-      <ViperCanvas {...dimensions.xScale} />
+      <ViperCanvas {...dimensions.xScale} type="xScale" />
     </div>
   );
 }

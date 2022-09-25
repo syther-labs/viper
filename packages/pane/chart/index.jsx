@@ -35,8 +35,6 @@ const $api = new API({
   datasets,
   dataModels,
   requestData: async ({ source, name, timeframe, modelId, start, end }) => {
-    console.log(source, name);
-
     if (source === "Binance") {
       const tf = {
         60000: "1m",

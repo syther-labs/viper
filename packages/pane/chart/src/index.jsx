@@ -171,8 +171,6 @@ export default class Chart {
       end,
     });
 
-    console.log(renderingQueueId);
-
     // Calcualte new data
     calculateOneSet({
       renderingQueueId,

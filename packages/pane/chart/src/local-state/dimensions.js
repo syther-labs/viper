@@ -54,7 +54,7 @@ export function updateLayers() {
   const layers = {};
 
   for (const id of ids) {
-    const layer = y[id];
+    const layer = y[id].get();
     layers[id] = { top: 0, height: 0 };
 
     if (layer.fullscreen) {
@@ -68,7 +68,9 @@ export function updateLayers() {
 
   if (!fullscreenId.length) {
     for (const id of ids) {
-      const height = v.visible
+      const layer = y[id].get();
+
+      const height = layer.visible
         ? dimensions.main.height.get() * (layer.heightUnit / total)
         : 0;
 

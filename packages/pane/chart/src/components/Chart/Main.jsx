@@ -4,7 +4,6 @@ import ViperCanvas from "./ViperCanvas";
 export default function Main() {
   function onWheel(e) {
     e.preventDefault();
-    console.log(e);
   }
 
   return (
@@ -18,7 +17,7 @@ export default function Main() {
         height: `${dimensions.main.height.get()}px`,
       }}
     >
-      <ViperCanvas{...dimensions.main} />
+      <ViperCanvas {...dimensions.main} type="main" />
     </div>
   );
 }
