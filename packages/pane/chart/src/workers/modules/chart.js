@@ -286,7 +286,7 @@ const methods = {
     );
 
     // Loop through all sets and generate main and yScale instructions for plots
-    for (const id in this.sets) {
+    for (const id in sets) {
       const set = sets[id];
       const indicator = queue.get(id);
 

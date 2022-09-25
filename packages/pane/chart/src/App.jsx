@@ -32,7 +32,7 @@ function App() {
       <Main />
       <YScale />
       <XScale />
-      <div className="absolute w-full h-full p-6">
+      <div className="absolute p-4">
         <Overlay />
       </div>
     </div>

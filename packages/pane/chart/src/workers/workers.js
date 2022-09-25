@@ -110,7 +110,7 @@ export async function generateAllInstructions() {
   } = await new Promise((resolve) => {
     const id = addToResolveQueue(resolve);
 
-    const y = state.ranges.y.get();
+    const y = { ...state.ranges.y.get() };
     for (const id in y) {
       y[id] = y[id].get();
     }
@@ -145,8 +145,6 @@ export async function generateAllInstructions() {
       })
     );
   });
-
-  console.log(instructions);
 
   instructions = newInstructions;
   state.pixelsPerElement.set(pixelsPerElement);
