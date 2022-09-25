@@ -1,6 +1,4 @@
-import { v } from "../../../../api";
-
-export default v({
+export default {
   main: {
     background: {},
     values: {},
@@ -17,4 +15,4 @@ export default v({
     scales: [],
     crosshair: {},
   },
-});
+};

@@ -2,7 +2,7 @@ import utils from "../utils";
 
 import ChartWorker from "./modules/chart?worker";
 import dimensions from "../local-state/dimensions";
-import instructions from "../local-state/instructions";
+import Instructions from "../local-state/instructions";
 import state from "../state";
 
 const j = (d) => JSON.parse(JSON.stringify(d));
@@ -13,6 +13,7 @@ const workers = {
 };
 const resolveQueue = {};
 
+let instructions = Instructions;
 let isRequestingToGenerateAllInstructions = false;
 let isGeneratingAllInstrutions = false;
 
@@ -89,7 +90,7 @@ export async function calculateOneSet({
   });
 
   // Generate instructions for this set
-  // await this.generateAllInstructions();
+  await generateAllInstructions();
 }
 
 export async function generateAllInstructions() {
@@ -109,42 +110,45 @@ export async function generateAllInstructions() {
   } = await new Promise((resolve) => {
     const id = addToResolveQueue(resolve);
 
+    const y = state.ranges.y.get();
+    for (const id in y) {
+      y[id] = y[id].get();
+    }
+
     workers.chart.postMessage(
       j({
-        type: "runComputedStateMethod",
-        data: {
-          method: "generateAllInstructions",
-          resolveId: id,
-          chartId: this.chart.id,
-          params: {
-            requestedRanges: {
-              x: state.ranges.x.get(),
-              y: state.ranges.y.get(),
-            },
-            timeframe: state.timeframe.get(),
-            chartDimensions: {
-              main: {
-                width: dimensions.main.width.get(),
-                height: dimensions.main.height.get(),
-                layers: dimensions.main.layers.get(),
-              },
-              yScale: {
-                width: dimensions.yScale.width.get(),
-                height: dimensions.yScale.height.get(),
-              },
-              xScale: {
-                width: dimensions.xScale.width.get(),
-                height: dimensions.xScale.height.get(),
-              },
-            },
-            pixelsPerElement: state.pixelsPerElement.get(),
+        id,
+        method: "generateAllInstructions",
+        params: {
+          requestedRanges: {
+            x: state.ranges.x.get(),
+            y,
           },
+          timeframe: state.timeframe.get(),
+          chartDimensions: {
+            main: {
+              width: dimensions.main.width.get(),
+              height: dimensions.main.height.get(),
+              layers: dimensions.main.layers.get(),
+            },
+            yScale: {
+              width: dimensions.yScale.width.get(),
+              height: dimensions.yScale.height.get(),
+            },
+            xScale: {
+              width: dimensions.xScale.width.get(),
+              height: dimensions.xScale.height.get(),
+            },
+          },
+          pixelsPerElement: state.pixelsPerElement.get(),
         },
       })
     );
   });
 
-  instructions.set(newInstructions);
+  console.log(instructions);
+
+  instructions = newInstructions;
   state.pixelsPerElement.set(pixelsPerElement);
   state.renderedRanges.x.set(visibleRanges.x);
 

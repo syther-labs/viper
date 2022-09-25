@@ -4,6 +4,10 @@ import utils from "../../utils";
 import math from "../../viper-script/math";
 import ScriptFunctions from "../../viper-script/script-functions";
 
+import Instructions from "../../local-state/instructions";
+import Calculations from "../calculations";
+import Generators from "../generators";
+
 const queue = new Map();
 const sets = {};
 const computedState = {};
@@ -162,6 +166,187 @@ const methods = {
         },
       });
     }
+  },
+
+  generateAllInstructions({
+    requestedRanges,
+    timeframe,
+    chartDimensions,
+    pixelsPerElement,
+  }) {
+    // Calculate max and min of all plotted sets
+    const timestamps = utils.getAllTimestampsIn(
+      requestedRanges.x.start,
+      requestedRanges.x.end,
+      timeframe
+    );
+
+    const layerMinsAndMaxs = {};
+    for (const layerId in requestedRanges.y) {
+      layerMinsAndMaxs[layerId] = {
+        min: Infinity,
+        max: -Infinity,
+      };
+    }
+
+    // Calculate min and max of all sets in visible range that are visible
+    for (const id in sets) {
+      // Check if indicator is visible
+      const indicator = queue.get(id);
+
+      if (!indicator.visible) continue;
+
+      let [setMin, setMax] = Calculations.getMinAndMax(sets[id], timestamps);
+
+      let scaleMin = setMin;
+      let scaleMax = setMax;
+
+      const layer = requestedRanges.y[indicator.layerId];
+
+      // If percentage chart, calculate scale based on first plotted value
+      if (layer.scaleType === "percent") {
+        const first = Calculations.getFirstValue(sets[id], timestamps);
+        scaleMin = ((setMin - first) / Math.abs(first)) * 100;
+        scaleMax = ((setMax - first) / Math.abs(first)) * 100;
+      }
+
+      // If normalizes chart, calcualte based on 0-100 range
+      if (layer.scaleType === "normalized") {
+        scaleMin = 0;
+        scaleMax = 100;
+      }
+
+      // If min and max are equal, add +1 and -1 boundary to it so line data will render
+      if (scaleMin === scaleMax) {
+        scaleMin -= 1;
+        scaleMax += 1;
+        setMin -= 1;
+        setMax += 1;
+      }
+
+      sets[id].visibleMin = setMin;
+      sets[id].visibleMax = setMax;
+      sets[id].visibleScaleMin = scaleMin;
+      sets[id].visibleScaleMax = scaleMax;
+
+      if (!layerMinsAndMaxs[indicator.layerId]) {
+        layerMinsAndMaxs[indicator.layerId] = {
+          min: Infinity,
+          max: -Infinity,
+        };
+      }
+
+      if (scaleMin < layerMinsAndMaxs[indicator.layerId].min) {
+        layerMinsAndMaxs[indicator.layerId].min = scaleMin;
+      }
+      if (scaleMax > layerMinsAndMaxs[indicator.layerId].max) {
+        layerMinsAndMaxs[indicator.layerId].max = scaleMax;
+      }
+    }
+
+    const visibleRanges = {
+      x: {
+        start: requestedRanges.x.start,
+        end: requestedRanges.x.end,
+      },
+      y: {},
+    };
+
+    // Calculate the visible range based on chart settings.
+    for (const layerId in layerMinsAndMaxs) {
+      const { y } = Calculations.getVisibleRange.bind(this)(
+        {
+          x: requestedRanges.x,
+          y: requestedRanges.y[layerId],
+        },
+        layerMinsAndMaxs[layerId].min,
+        layerMinsAndMaxs[layerId].max
+      );
+      visibleRanges.y[layerId] = {
+        min: y.range.min,
+        max: y.range.max,
+      };
+    }
+
+    const { start, end } = visibleRanges.x;
+
+    pixelsPerElement = Calculations.calculatePixelsPerElement(
+      start,
+      end,
+      timeframe,
+      chartDimensions.main.width
+    );
+
+    // Build fresh instructions struct
+    const instructions = Instructions;
+
+    // Get array of x coords for each timestamp on x axis
+    const timestampXCoords = timestamps.map((time) =>
+      utils.getXCoordByTimestamp(start, end, chartDimensions.main.width, time)
+    );
+
+    // Loop through all sets and generate main and yScale instructions for plots
+    for (const id in this.sets) {
+      const set = sets[id];
+      const indicator = queue.get(id);
+
+      // If indicator is not visible, dont generate instrutions
+      if (!indicator.visible) continue;
+
+      const { scaleType } = requestedRanges.y[indicator.layerId];
+
+      // Generate main instructions for set depending on scale type
+      instructions.main.values[id] = {
+        layerId: indicator.layerId,
+        values: Generators.main.values(
+          set,
+          timestamps,
+          indicator,
+          timestampXCoords,
+          pixelsPerElement,
+          visibleRanges.y[indicator.layerId],
+          chartDimensions
+        ),
+      };
+
+      const [yScale, main] = Generators.yScale.plots(
+        set,
+        timestamps,
+        indicator,
+        chartDimensions,
+        visibleRanges.y[indicator.layerId],
+        scaleType
+      );
+
+      instructions.yScale.plots[id] = {
+        layerId: indicator.layerId,
+        values: yScale,
+      };
+      instructions.main.plots[id] = {
+        layerId: indicator.layerId,
+        values: main,
+      };
+    }
+
+    // Calculate x and y scales
+    instructions.yScale.scales = Generators.yScale.scales(
+      visibleRanges.y,
+      chartDimensions,
+      requestedRanges.y
+    );
+    instructions.xScale.scales = Generators.xScale.scales(
+      pixelsPerElement,
+      timeframe,
+      visibleRanges.x,
+      chartDimensions
+    );
+
+    return {
+      instructions,
+      visibleRanges,
+      pixelsPerElement,
+      maxDecimalPlaces: 0,
+    };
   },
 };
 

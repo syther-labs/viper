@@ -1,9 +1,6 @@
-import Constants from "../constants";
-import Utils from "../utils.js";
-import Helpers from "./helpers.js";
-
 import Decimal from "decimal.js";
-import constants from "../constants";
+import Helpers from "./helpers.js";
+import Constants from "../constants";
 import utils from "../utils.js";
 
 export default {
@@ -21,13 +18,13 @@ export default {
       const { top, height } = chartDimensions.main.layers[indicator.layerId];
 
       // Get min and max yCoords for multiplication later
-      const minY = Utils.getYCoordByPrice(
+      const minY = utils.getYCoordByPrice(
         visibleRange.min,
         visibleRange.max,
         height,
         set.visibleScaleMin
       );
-      const maxY = Utils.getYCoordByPrice(
+      const maxY = utils.getYCoordByPrice(
         visibleRange.min,
         visibleRange.max,
         height,
@@ -246,7 +243,7 @@ export default {
           let y = Math.max(
             0,
             Math.min(
-              Utils.getYCoordByPrice(
+              utils.getYCoordByPrice(
                 visibleRange.min,
                 visibleRange.max,
                 height,
@@ -344,7 +341,7 @@ export default {
           .toNumber();
 
         const getY = (v) =>
-          Utils.getYCoordByPrice(yRanges[id].min, yRanges[id].max, height, v);
+          utils.getYCoordByPrice(yRanges[id].min, yRanges[id].max, height, v);
 
         scales[id] = [];
         const layer = requestedRanges[id];
@@ -385,7 +382,7 @@ export default {
       }
 
       const getX = (t) =>
-        Utils.getXCoordByTimestamp(
+        utils.getXCoordByTimestamp(
           visibleRange.start,
           visibleRange.end,
           chartDimensions.xScale.width,
