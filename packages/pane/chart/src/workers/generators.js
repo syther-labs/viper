@@ -397,7 +397,7 @@ export default {
         if ((time / Constants.DAY) % 1 === 0) {
           const date = d.value.getDate();
           if (date === 1) {
-            text = `${constants.MONTHS[d.value.getMonth()].short}`;
+            text = `${Constants.MONTHS[d.value.getMonth()].short}`;
           } else {
             text = `${date}`;
           }

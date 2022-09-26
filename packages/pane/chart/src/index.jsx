@@ -12,7 +12,7 @@ import utils from "./utils";
 import state, { initState } from "./state";
 import API from "../../../api";
 import dimensions, { setDimensions } from "./local-state/dimensions";
-import { addToQueue, calculateOneSet } from "./workers/workers.js";
+import { addToQueue, calculateOneSet, generateAllInstructions } from "./workers/workers.js";
 import plot_types from "./data/plot_types";
 
 export default class Chart {
@@ -100,7 +100,30 @@ export default class Chart {
       }));
     }
 
-    // TODO generate all instructions
+    generateAllInstructions();
+  }
+
+  resizeXRange(change, left = 0.5, right = 0.5) {
+    const width = dimensions.main.width.get();
+
+    let { start, end } = state.ranges.x.get();
+    let range = end - start;
+
+    if (change < 0) {
+      start -= (range * left) / 10;
+      end += (range * right) / 10;
+    } else if (change > 0) {
+      start += (range * left) / 10;
+      end -= (range * right) / 10;
+    }
+
+    // Calcualte new pixels per element based on new range
+    const ppe = width / ((end - start) / state.timeframe.get());
+
+    // If pixels per element is less than 1 or greater than 1000, dont apply changes
+    if (ppe < 1 || ppe > 1000) return;
+
+    this.setVisibleRange({ start, end });
   }
 
   createDatasetGroup({ source, name }) {
@@ -132,6 +155,7 @@ export default class Chart {
 
     indicator = {
       ...indicator,
+      color,
       dataset,
       model,
       visible,
@@ -224,6 +248,22 @@ export default class Chart {
       ...v,
       [id]: renderedLayer,
     }));
+  }
+
+  getLayerByYCoord(yCoord) {
+    const layers = dimensions.main.layers.get();
+    const ids = Object.keys(layers).filter((id) => layers[id].height > 0);
+
+    for (let i = 0; i < ids.length; i++) {
+      const l1 = layers[ids[i]];
+      const l2 = layers[ids[i + 1]];
+
+      // If no next layer, current layer
+      if (!l2) return ids[i];
+
+      // If between top and bottom of layer in question
+      if (yCoord >= l1.top && yCoord <= l2.top) return ids[i];
+    }
   }
 
   /**

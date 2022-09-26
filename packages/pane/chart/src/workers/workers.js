@@ -76,7 +76,7 @@ export async function setVisibility({ renderingQueueId, visible }) {
     );
   });
 
-  await this.generateAllInstructions();
+  await generateAllInstructions();
 }
 
 export async function calculateOneSet({
@@ -181,7 +181,7 @@ export async function generateAllInstructions() {
   // If another generation is requested, call again
   if (isRequestingToGenerateAllInstructions) {
     isRequestingToGenerateAllInstructions = false;
-    setTimeout(this.generateAllInstructions);
+    setTimeout(generateAllInstructions);
   }
 }
 

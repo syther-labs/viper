@@ -22,6 +22,7 @@ function App() {
   function onResizeWindow() {
     const { clientWidth, clientHeight } = chartElement;
     setDimensions(clientWidth, clientHeight);
+    state.chart.setVisibleRange({})
   }
 
   return (

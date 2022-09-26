@@ -1,12 +1,41 @@
+import { onCleanup } from "solid-js";
 import { onMount } from "solid-js";
 import RenderingEngine from "../../lib/rendering-engine";
 import utils from "../../utils";
 
 export default function ViperCanvas(props) {
-  const { type, height, width } = props;
+  const { emit, type, height, width } = props;
 
   let canvasEl;
   let canvas;
+
+  let mouseDown = false;
+
+  function onMouseDown(e) {
+    mouseDown = true;
+    window.addEventListener("mouseup", onMouseUp);
+    window.addEventListener("mousemove", onDragToResize);
+    emit("onMouseDown", e)
+  }
+
+  function onMouseUp(e) {
+    mouseDown = false;
+    window.removeEventListener("mouseup", onMouseUp);
+    window.removeEventListener("mousemove", onDragToResize);
+    emit("onMouseUp", e)
+  }
+
+  function onDragToResize(e) {
+    emit("onDragToResize", e)
+  }
+
+  function onWheel(e) {
+    emit("onWheel", e);
+  }
+
+  function onDoubleClick(e) {
+    emit("onDoubleClick", e);
+  }
 
   onMount(() => {
     canvas = new Canvas({
@@ -15,8 +44,16 @@ export default function ViperCanvas(props) {
     })
   })
 
+  onCleanup(() => {
+    window.removeEventListener("mouseup", onMouseUp);
+    window.removeEventListener("mousemove", onDragToResize);
+  })
+
   return (
     <canvas
+      onMouseDown={onMouseDown}
+      onWheel={onWheel}
+      on:dblclick={onDoubleClick}
       ref={canvasEl}
       height={height.get()}
       width={width.get()}
@@ -26,7 +63,7 @@ export default function ViperCanvas(props) {
 }
 
 class Canvas {
-  constructor({ $state, canvas, type = "", cursor = "default" }) {
+  constructor({ $state, canvas, type = "" }) {
     this.$state = $state;
 
     this.canvas = canvas;
@@ -36,12 +73,6 @@ class Canvas {
       type,
     });;
     this.type = type;
-    this.cursor = cursor;
-  }
-
-  setCursor(cursor = "") {
-    this.cursor = cursor;
-    this.canvas.style.cursor = cursor;
   }
 
   /**
