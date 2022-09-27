@@ -1,18 +1,24 @@
 /* @refresh reload */
-import { render } from "solid-js/web";
+import { render } from 'solid-js/web';
 
-import "remixicon/fonts/remixicon.css";
+import App from './App';
 
-import App from "./App";
+import utils from './utils';
 
-import utils from "./utils";
+import { v } from '../../api/api';
 
-import { v } from "../../api/api";
-
-import state, { initState } from "./state";
-import API from "../../api/api.js";
-import dimensions, { setDimensions, updateLayers } from "./local-state/dimensions";
-import { addToQueue, calculateOneSet, generateAllInstructions, setIndicatorVisibility } from "./workers/workers.js";
+import state, { initState } from './state';
+import API from '../../api/api.js';
+import dimensions, {
+  setDimensions,
+  updateLayers,
+} from './local-state/dimensions';
+import {
+  addToQueue,
+  calculateOneSet,
+  generateAllInstructions,
+  setIndicatorVisibility,
+} from './workers/workers.js';
 
 export default class Chart {
   /**
@@ -93,7 +99,7 @@ export default class Chart {
     }
 
     if (min !== yRange.min || max !== yRange.max) {
-      state.ranges.y.get()[layerId].set((v) => ({
+      state.ranges.y.get()[layerId].set(v => ({
         ...v,
         range: { min, max },
       }));
@@ -127,7 +133,7 @@ export default class Chart {
 
   createDatasetGroup({ source, name }) {
     const dataset = v({
-      type: "Dataset",
+      type: 'Dataset',
       visible: true,
       values: {
         datasetName: `${source}:${name}`,
@@ -150,7 +156,7 @@ export default class Chart {
     }
 
     // Set the dataset visibility
-    dataset.set(v => ({ ...v, visible }))
+    dataset.set(v => ({ ...v, visible }));
   }
 
   async addIndicator(
@@ -181,19 +187,19 @@ export default class Chart {
     // Create the indicator to be added to state
     indicator = v(indicator);
 
-    state.indicators.set((v) => ({
+    state.indicators.set(v => ({
       ...v,
       [renderingQueueId]: indicator,
     }));
 
     // Add a reference to the indicator in the dataset group indicators array
-    dataset.set((v) => {
+    dataset.set(v => {
       v.values.indicatorIds = [...v.values.indicatorIds, renderingQueueId];
       return { ...v };
     });
 
     const { datasetName } = dataset.get().values;
-    const [source, name] = datasetName.split(":");
+    const [source, name] = datasetName.split(':');
     const { start, end } = state.ranges.x.get();
     const timeframe = state.timeframe.get();
 
@@ -222,7 +228,7 @@ export default class Chart {
 
   setIndicatorVisibility(renderingQueueId, visible) {
     const indicators = state.indicators.get();
-    const indicator = indicators[renderingQueueId]
+    const indicator = indicators[renderingQueueId];
 
     indicator.set(v => ({ ...v, visible }));
 
@@ -230,7 +236,7 @@ export default class Chart {
       renderingQueueId,
       visible,
     });
-    
+
     // Check if any indicators in layer are visible
     const layer = state.ranges.y.get()[indicator.get().layerId];
     let found = false;
@@ -249,7 +255,7 @@ export default class Chart {
 
     // If none visible, set layer to invisible
     if (!found) {
-      layer.set(v => ({ ...v, visible: false }))
+      layer.set(v => ({ ...v, visible: false }));
     }
 
     updateLayers();
@@ -263,10 +269,10 @@ export default class Chart {
     // Delete indicator reference from dataset
     const i = dataset.get().values.indicatorIds.indexOf(id);
     dataset.get().values.indicatorIds.splice(i, 1);
-    dataset.set((v) => ({ ...v }));
+    dataset.set(v => ({ ...v }));
 
     // Delete from indicators store
-    state.indicators.set((v) => {
+    state.indicators.set(v => {
       delete v[id];
       return { ...v };
     });
@@ -281,19 +287,19 @@ export default class Chart {
       lockedYScale: true,
       visible: true,
       fullscreen: false,
-      scaleType: "default",
+      scaleType: 'default',
       indicators: {},
       range: { min: Infinity, max: -Infinity },
     });
 
-    state.ranges.y.set((v) => ({
+    state.ranges.y.set(v => ({
       ...v,
       [id]: layer,
     }));
 
     const renderedLayer = v({ range: { min: Infinity, max: -Infinity } });
 
-    state.renderedRanges.y.set((v) => ({
+    state.renderedRanges.y.set(v => ({
       ...v,
       [id]: renderedLayer,
     }));
@@ -303,7 +309,7 @@ export default class Chart {
 
   getLayerByYCoord(yCoord) {
     const layers = dimensions.main.layers.get();
-    const ids = Object.keys(layers).filter((id) => layers[id].height > 0);
+    const ids = Object.keys(layers).filter(id => layers[id].height > 0);
 
     for (let i = 0; i < ids.length; i++) {
       const l1 = layers[ids[i]];
