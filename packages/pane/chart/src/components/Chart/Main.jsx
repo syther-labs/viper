@@ -56,8 +56,6 @@ export default function Main() {
 
     // If vertical scroll
     else if (deltaY !== 0) {
-      console.log(deltaY);
-
       const layerId = state.chart.getLayerByYCoord(offsetY);
       const layer = state.ranges.y.get()[layerId].get();
       let { start, end } = state.ranges.x.get();

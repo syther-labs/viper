@@ -60,20 +60,15 @@ export async function addToQueue({ indicator }) {
   return { renderingQueueId };
 }
 
-export async function setVisibility({ renderingQueueId, visible }) {
+export async function setIndicatorVisibility({ renderingQueueId, visible }) {
   await new Promise((resolve) => {
     const id = addToResolveQueue(resolve);
 
-    workers.chart.postMessage(
-      j({
-        type: "runComputedStateMethod",
-        data: {
-          method: "setVisibility",
-          resolveId: id,
-          params: { renderingQueueId, visible },
-        },
-      })
-    );
+    workers.chart.postMessage(j({
+      id,
+      method: "setIndicatorVisibility",
+      params: { renderingQueueId, visible },
+    }));
   });
 
   await generateAllInstructions();
@@ -254,7 +249,7 @@ function onWorkerMessage(e) {
 
   switch (id) {
     case "updateInstructions":
-      instructions.set(data.instructions);
+      instructions = data.instructions;
       break;
     default:
       resolveQueue[id](data);

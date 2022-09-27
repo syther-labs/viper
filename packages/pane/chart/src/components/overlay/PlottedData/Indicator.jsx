@@ -8,10 +8,8 @@ export default function Indicator(props) {
   const indicator = state.indicators.get()[indicatorId];
 
   function onToggleVisible() {
-    indicator.set((v) => ({
-      ...v,
-      visible: !v.visible,
-    }));
+    const { renderingQueueId, visible } = indicator.get();
+    state.chart.setIndicatorVisibility(renderingQueueId, !visible)
   }
 
   function onRemove() {

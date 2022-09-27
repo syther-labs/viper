@@ -99,3 +99,35 @@ chart.addIndicator(
   },
   {}
 );
+
+chart.addIndicator(
+  {
+    id: "candlestick",
+    version: "1.0.0",
+    name: "Candlestick",
+    dependencies: ["ohlc"],
+    draw({ open, high, low, close, plotCandle }) {
+      const color = close >= open ? "#C4FF49" : "#FE3A64";
+      plotCandle({
+        open,
+        high,
+        low,
+        close,
+        title: "Candlestick",
+        color,
+        wickcolor: color,
+        ylabel: true,
+      });
+    },
+  },
+  group,
+  {
+    id: "price",
+    model: "ohlc",
+    name: "Price",
+    label: `%s:%n`,
+  },
+  {
+    layerId: 1
+  }
+);

@@ -11,8 +11,8 @@ import utils from "./utils";
 
 import state, { initState } from "./state";
 import API from "../../../api";
-import dimensions, { setDimensions } from "./local-state/dimensions";
-import { addToQueue, calculateOneSet, generateAllInstructions } from "./workers/workers.js";
+import dimensions, { setDimensions, updateLayers } from "./local-state/dimensions";
+import { addToQueue, calculateOneSet, generateAllInstructions, setIndicatorVisibility } from "./workers/workers.js";
 import plot_types from "./data/plot_types";
 
 export default class Chart {
@@ -141,6 +141,19 @@ export default class Chart {
     return dataset;
   }
 
+  setDatasetVisibility(index, visible) {
+    // Get the dataset from plot map
+    const dataset = state.plots.get()[index];
+
+    // Loop through all indicators and set their visibility
+    for (const indicatorId of dataset.get().values.indicatorIds) {
+      this.setIndicatorVisibility(indicatorId, visible);
+    }
+
+    // Set the dataset visibility
+    dataset.set(v => ({ ...v, visible }))
+  }
+
   async addIndicator(
     indicator,
     dataset,
@@ -208,6 +221,43 @@ export default class Chart {
     });
   }
 
+  setIndicatorVisibility(renderingQueueId, visible) {
+    const indicators = state.indicators.get();
+    const indicator = indicators[renderingQueueId]
+
+    indicator.set(v => ({ ...v, visible }));
+
+    setIndicatorVisibility({
+      renderingQueueId,
+      visible,
+    });
+    
+    // Check if any indicators in layer are visible
+    const layer = state.ranges.y.get()[indicator.get().layerId];
+    let found = false;
+
+    // Loop through all indicators and see if any are using same layerId and visible
+    for (const renderingQueueId in indicators) {
+      const { layerId, visible } = indicators[renderingQueueId].get();
+
+      // If one indicator found, set to visible
+      if (indicator.get().layerId === layerId && visible) {
+        layer.set(v => ({ ...v, visible: true }));
+        found = true;
+        break;
+      }
+    }
+
+    // If none visible, set layer to invisible
+    if (!found) {
+      layer.set(v => ({ ...v, visible: false }))
+    }
+
+    updateLayers();
+
+    generateAllInstructions();
+  }
+
   removeIndicator(indicator) {
     const { id, dataset } = indicator.get();
 
@@ -248,6 +298,8 @@ export default class Chart {
       ...v,
       [id]: renderedLayer,
     }));
+
+    return id;
   }
 
   getLayerByYCoord(yCoord) {

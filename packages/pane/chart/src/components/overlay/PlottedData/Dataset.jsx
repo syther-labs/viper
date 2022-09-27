@@ -7,10 +7,8 @@ export default function DatasetGroup(props) {
   const dataset = state.plots.get()[props.index];
 
   function onToggleVisible() {
-    dataset.set({
-      ...dataset.get(),
-      visible: !dataset.get().visible,
-    });
+    const { visible } = dataset.get();
+    state.chart.setDatasetVisibility(props.index, !visible);
   }
 
   function onRemove() {

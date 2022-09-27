@@ -11,6 +11,7 @@ import Generators from "../generators";
 const queue = new Map();
 const sets = {};
 const computedState = {};
+let instructions = Instructions;
 
 self.addEventListener("message", async (e) => {
   const { id, method = "", params = {} } = e.data;
@@ -26,6 +27,22 @@ const methods = {
     let renderingQueueId = utils.uniqueId();
     queue.set(renderingQueueId, indicator);
     return { renderingQueueId };
+  },
+
+  setIndicatorVisibility({ renderingQueueId, visible }) {
+    const indicator = queue.get(renderingQueueId);
+    indicator.visible = visible;
+    queue.set(renderingQueueId, indicator);
+
+    if (!indicator.visible) {
+      delete instructions.main.values[renderingQueueId];
+      delete instructions.main.plots[renderingQueueId];
+      delete instructions.yScale.plots[renderingQueueId];
+      postMessage({
+        id: "updateInstructions",
+        data: { instructions }
+      })
+    }
   },
 
   calculateOneSet({ renderingQueueId, timestamps, dataset }) {
