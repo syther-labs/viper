@@ -1,11 +1,12 @@
-import { For } from 'solid-js';
-import { actions } from './stores/ui';
+import { For } from "solid-js";
+import { actions } from "./stores/ui";
 
-import Action from './components/ui/Action';
-import { Show } from 'solid-js';
-import AddPaneButton from './components/ui/AddPaneButton';
-import { panes } from './stores/panes';
-import PanesView from './components/ui/PanesView';
+import Action from "./components/ui/Action";
+import { Show } from "solid-js";
+import AddPaneButton from "./components/ui/AddPaneButton";
+import { panes } from "./stores/panes";
+import PanesView from "./components/ui/PanesView";
+import FloatingWindow from "./components/ui/FloatingWindow";
 
 export default function App() {
   return (
@@ -13,9 +14,9 @@ export default function App() {
       <nav className="flex items-center w-full h-12 border-z-8 border-b-1">
         <div className="border-z-8 border-r-1">
           {Action({
-            type: 'link',
-            link: 'https://vipercharts.com',
-            imageUrl: '/assets/images/logos/viper-xs.webp',
+            type: "link",
+            link: "https://vipercharts.com",
+            imageUrl: "/assets/images/logos/viper-xs.webp",
           })}
         </div>
 
@@ -24,9 +25,9 @@ export default function App() {
           <Show
             when={actions.length}
             fallback={Action({
-              type: 'button',
+              type: "button",
               disabled: true,
-              text: 'This pane has no actions',
+              text: "This pane has no actions",
             })}
           >
             <For each={actions}>{Action}</For>
@@ -37,9 +38,9 @@ export default function App() {
 
         <div className="border-z-8 border-l-1 h-full">
           {Action({
-            type: 'button',
+            type: "button",
             onClick: () => {},
-            text: 'Unlock grid',
+            text: "Unlock grid",
           })}
         </div>
       </nav>
@@ -53,6 +54,8 @@ export default function App() {
       <div className="fixed right-[0px] bottom-[0px]">
         <AddPaneButton />
       </div>
+
+      <FloatingWindow />
     </div>
   );
 }

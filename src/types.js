@@ -5,6 +5,18 @@
  */
 
 /**
+ * @typedef {Object} ReactiveNumber
+ * @property {function(): number} get // Returns current value
+ * @property {function(number)} set // Sets new value
+ */
+
+/**
+ * @typedef {Object} ReactiveString
+ * @property {function(): string} get // Returns current value
+ * @property {function(string)} set // Sets new value
+ */
+
+/**
  * @typedef {Object} Action
  * @property {("link"|"button")} type The type of action
  * @property {string} link The link to open a new tab
