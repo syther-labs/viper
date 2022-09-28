@@ -1,5 +1,5 @@
 import { For } from "solid-js";
-import { actions } from "./stores/ui";
+import { actions, windows } from "./stores/ui";
 
 import Action from "./components/ui/Action";
 import { Show } from "solid-js";
@@ -10,7 +10,7 @@ import FloatingWindow from "./components/ui/FloatingWindow";
 
 export default function App() {
   return (
-    <div className="flex flex-col w-full h-full bg-z-10 text-z-1 relative">
+    <div className="flex flex-col w-full h-full bg-z-10 text-z-1 relative text-xs">
       <nav className="flex items-center w-full h-12 border-z-8 border-b-1">
         <div className="border-z-8 border-r-1">
           {Action({
@@ -55,7 +55,10 @@ export default function App() {
         <AddPaneButton />
       </div>
 
-      <FloatingWindow />
+      {/* Render all floating windows */}
+      <For each={windows.get()}>
+        {(window, i) => <FloatingWindow {...window.get()} index={i()} />}
+      </For>
     </div>
   );
 }

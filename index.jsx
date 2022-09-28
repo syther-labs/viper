@@ -6,6 +6,7 @@ import "remixicon/fonts/remixicon.css";
 
 import App from "./src/App";
 import global from "./src/global";
+import { createNewWindow } from "./src/stores/ui";
 
 export default class Viper {
   /**
@@ -35,7 +36,21 @@ export default class Viper {
     registerControl({
       name: "Show all controls",
       combo: ["ShiftLeft", "Slash"],
-      method: () => console.log("TODO: Show controls modal"),
+      method: () => {
+        createNewWindow({
+          title: "Controls",
+          jsx: (
+            <div className="p-2">
+              "Lorem ipsum dolor sit amet consectetur adipisicing elit. Totam
+              quibusdam, fuga deserunt corporis minus repudiandae excepturi
+              voluptates quae alias architecto expedita neque, nam, vitae nihil
+              hic harum praesentium. Nisi, obcaecati!"
+            </div>
+          ),
+          height: 100,
+          width: 1000,
+        });
+      },
     });
   }
 
