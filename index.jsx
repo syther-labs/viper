@@ -6,7 +6,7 @@ import "remixicon/fonts/remixicon.css";
 
 import App from "./src/App";
 import global from "./src/global";
-import { createNewWindow } from "./src/stores/ui";
+import ui, { createNewWindow } from "./src/stores/ui";
 
 export default class Viper {
   /**
@@ -24,6 +24,7 @@ export default class Viper {
 
   init() {
     keybinds.init();
+    ui.init();
 
     // Define all keybinds
     // TODO move to separate file
@@ -47,8 +48,8 @@ export default class Viper {
               hic harum praesentium. Nisi, obcaecati!"
             </div>
           ),
-          height: 100,
-          width: 1000,
+          height: 400,
+          width: 400,
         });
       },
     });
@@ -56,5 +57,6 @@ export default class Viper {
 
   destory() {
     keybinds.destroy();
+    ui.destroy();
   }
 }

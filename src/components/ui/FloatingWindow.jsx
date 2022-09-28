@@ -1,24 +1,24 @@
 import { onMount, onCleanup, children } from "solid-js";
 import { v } from "../../api/api";
 import global from "../../global";
-import { windows } from "../../stores/ui";
+import { activeWindow, closeWindow } from "../../stores/ui";
 
 /** @typedef {("none"|"drag"|"resize")} MovingState */
 
 /**
  * Create a new moveable and resizable floating window
  * @param {Object} props
+ * @param {string} props.id The id of the window state in the ui/windows store
  * @param {import("solid-js").JSXElement} props.children
  * @param {string} props.title The window title
  * @param {import("../../stores/ui").FloatingWindowDimensions} props.pos State for window position
- * @param {number} props.index The index of the window state in the ui/windows store
  */
 export default function FloatingWindow(props) {
   const {
+    id,
     children,
     title = "Untitled window",
     pos = generateInitialWindowPosition(),
-    index,
   } = props;
 
   /** @type {MovingState} */
@@ -60,14 +60,6 @@ export default function FloatingWindow(props) {
     }
   }
 
-  /** Close this floating window */
-  function close() {
-    windows.set(v => {
-      v.splice(index, 1);
-      return [...v];
-    });
-  }
-
   onMount(() => {
     window.addEventListener("mouseup", onMouseUp);
   });
@@ -79,7 +71,11 @@ export default function FloatingWindow(props) {
 
   return (
     <div
-      className="fixed flex flex-col bg-z-10 border-[1px] border-z-8 shadow-xl"
+      onMouseDown={[activeWindow.set, id]}
+      className="fixed flex flex-col bg-z-10 border-[1px] border-z-8 shadow-2xl"
+      classList={{
+        "border-primary-accent z-[100]": activeWindow.get() === id,
+      }}
       style={{
         top: `${pos.y.get()}px`,
         left: `${pos.x.get()}px`,
@@ -91,7 +87,7 @@ export default function FloatingWindow(props) {
         <div onMouseDown={[setMoving, "drag"]} className="grow cursor-move p-3">
           <h1>{title}</h1>
         </div>
-        <button onClick={close} className="text-xl h-12 w-12">
+        <button onClick={[closeWindow, id]} className="text-xl h-12 w-12">
           <i class="ri-close-line"></i>
         </button>
       </div>

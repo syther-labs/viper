@@ -3,7 +3,8 @@ import { v } from "../api/api";
 import { generateInitialWindowPosition } from "../components/ui/FloatingWindow";
 
 export const actions = v([]);
-export const windows = v([]);
+export const windows = v({});
+export const activeWindow = v("");
 
 /**
  * Create a new floating, movable window
@@ -12,6 +13,7 @@ export const windows = v([]);
  * @param {import('solid-js').JSXElement} obj.jsx JSX to be rendered as content
  * @param {number|undefined} obj.height
  * @param {number|undefined} obj.width
+ * @returns {ReactiveFloatingWindow}
  */
 export function createNewWindow({ title, jsx, height, width }) {
   // Create a unique id for this window
@@ -24,7 +26,24 @@ export function createNewWindow({ title, jsx, height, width }) {
     pos: generateInitialWindowPosition(height, width),
   });
 
-  windows.set(v => [...v, window]);
+  windows.set(v => ({ ...v, [id]: window }));
+  activeWindow.set(id);
+
+  return window;
+}
+
+/**
+ * @param {string} id
+ */
+export function closeWindow(id) {
+  windows.set(v => {
+    delete v[id];
+    return { ...v };
+  });
+
+  if (id === activeWindow.get()) {
+    activeWindow.set("");
+  }
 }
 
 /**
@@ -47,3 +66,21 @@ export function createNewWindow({ title, jsx, height, width }) {
  * @property {ReactiveNumber} w
  * @property {ReactiveNumber} h
  */
+
+/** @param {KeyboardEvent} e */
+function onKeyUp(e) {
+  // If an active window, close when pressing ESC
+  if (e.code === "Escape") {
+    closeWindow(activeWindow.get());
+  }
+}
+
+export default {
+  init() {
+    window.addEventListener("keyup", onKeyUp);
+  },
+
+  destroy() {
+    window.removeEventListener("keyup", onKeyUp);
+  },
+};

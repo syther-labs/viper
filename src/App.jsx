@@ -56,8 +56,8 @@ export default function App() {
       </div>
 
       {/* Render all floating windows */}
-      <For each={windows.get()}>
-        {(window, i) => <FloatingWindow {...window.get()} index={i()} />}
+      <For each={Object.keys(windows.get())}>
+        {id => <FloatingWindow {...windows.get()[id].get()} id={id} />}
       </For>
     </div>
   );
