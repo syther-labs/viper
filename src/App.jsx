@@ -7,6 +7,7 @@ import AddPaneButton from "./components/ui/AddPaneButton";
 import { panes } from "./stores/panes";
 import PanesView from "./components/ui/PanesView";
 import FloatingWindow from "./components/ui/FloatingWindow";
+import Spotlight from "./components/ui/Spotlight";
 
 export default function App() {
   return (
@@ -51,14 +52,16 @@ export default function App() {
         </div>
       </section>
 
-      <div className="fixed right-[0px] bottom-[0px]">
+      {/* <div className="fixed right-[0px] bottom-[0px]">
         <AddPaneButton />
-      </div>
+      </div> */}
 
       {/* Render all floating windows */}
       <For each={Object.keys(windows.get())}>
         {id => <FloatingWindow {...windows.get()[id].get()} id={id} />}
       </For>
+
+      <Show when={false} children={<Spotlight />} />
     </div>
   );
 }

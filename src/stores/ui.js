@@ -3,6 +3,12 @@ import { v } from "../api/api";
 import { generateInitialWindowPosition } from "../components/ui/FloatingWindow";
 
 export const actions = v([]);
+
+export const spotlight = {
+  search: v(""),
+  visible: v(false),
+};
+
 export const windows = v({});
 export const activeWindow = v("");
 

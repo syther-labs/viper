@@ -19,6 +19,8 @@ const keybinds = {};
 function onKeyDown(e) {
   e.preventDefault();
 
+  // If not already in an input
+
   if (!keyCombo.includes(e.code)) {
     keyCombo.push(e.code);
   }
@@ -33,6 +35,10 @@ function onKeyUp(e) {
 
   const id = keyCombo.join("+");
   const keybind = keybinds[id];
+
+  // If spotlight search
+  if (id.match(/^(Key)([A-Z])$/)) {
+  }
 
   // Reset the key combo
   keyCombo = [];
