@@ -118,11 +118,6 @@ function Pane(props) {
     >
       <div className="h-full w-full relative">
         <div
-          onMouseDown={[setMoving, "drag"]}
-          className="absolute top-0 left-0 h-4 w-4 cursor-move"
-        ></div>
-
-        <div
           onClick={[onNewPane, "l"]}
           class="absolute top-[20%] left-0 w-[2rem] h-[60%] hover:bg-primary"
         />
@@ -138,7 +133,10 @@ function Pane(props) {
           onClick={[onNewPane, "b"]}
           class="absolute bottom-0 right-[20%] w-[60%] h-[2rem] hover:bg-primary"
         />
-        <div className="w-full h-full flex items-center justify-center text-3xl">
+        <div
+          onMouseDown={[setMoving, "drag"]}
+          className="w-full h-full flex items-center justify-center text-3xl cursor-move"
+        >
           {props.id}
         </div>
 

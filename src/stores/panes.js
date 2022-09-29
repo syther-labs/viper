@@ -72,8 +72,6 @@ export function checkForOverlappingPanes(pane) {
     let { x, y, xx, yy, w, h } = res;
     if (w <= 0 || h <= 0) continue;
 
-    console.log(get().id, res);
-
     // If width is greater than height subtract height from box
     if (w >= h) {
       // If overlay y is greater than overlap height
@@ -83,7 +81,7 @@ export function checkForOverlappingPanes(pane) {
       } else {
         console.log("t");
         pos.top.set(v => v + h);
-        pos.height.set(h);
+        pos.height.set(v => v - h);
       }
     }
 
@@ -95,7 +93,7 @@ export function checkForOverlappingPanes(pane) {
       } else {
         console.log("l");
         pos.left.set(v => v + w);
-        pos.width.set(w);
+        pos.width.set(v => v - w);
       }
     }
   }
