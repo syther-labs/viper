@@ -1,4 +1,4 @@
-import { padEnd, uniqueId } from "lodash";
+import { uniqueId } from "lodash";
 import { v } from "../api/api";
 import utils from "../pane/chart/utils";
 
@@ -42,7 +42,7 @@ export function createPane(top, left, width, height) {
  * Check if any panes overlap with the pane in question
  * @param {Pane} pane
  */
-function checkForOverlappingPanes(pane) {
+export function checkForOverlappingPanes(pane) {
   const { id, pos } = pane.get();
 
   const A = {
