@@ -28,7 +28,7 @@ export default function PanesView() {
 
 function NoPanes() {
   return (
-    <div className="flex items-center justify-center h-full w-full">
+    <div className="absolute top-0 left-0 flex items-center justify-center h-full w-full">
       <div className="flex flex-col items-center justify-center">
         <h2 className="font-bold text-2xl mb-2">This layout has no panes</h2>
         <Button variant="primary-outline" size="md" onClick={[createPane]}>

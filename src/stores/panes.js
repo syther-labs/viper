@@ -30,6 +30,10 @@ export function createPane() {
  */
 function onAdded(event, items) {
   updatePanePositions(items);
+
+  items.forEach(item => {
+    item.el.style.border = "1px solid #fff";
+  });
 }
 
 /**
@@ -52,6 +56,7 @@ function updatePanePositions(items) {
 
     // Find correct pane that matches element
     const pane = values.find(v => v.get().element === item.el);
+    if (!pane) continue;
 
     // Add pos property for
     pane.set(v => ({
@@ -63,8 +68,6 @@ function updatePanePositions(items) {
         h: item.h,
       },
     }));
-
-    console.log(pane.get().pos);
   }
 }
 
@@ -77,7 +80,6 @@ export default {
    */
   init({ gridContainer, options = {} }) {
     grid = GridStack.addGrid(gridContainer, options);
-    console.log(grid, gridContainer);
     grid.on("added", onAdded);
     grid.on("change", onChange);
   },
