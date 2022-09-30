@@ -1,18 +1,15 @@
 import dimensions, { updateLayers } from "../../local-state/dimensions";
 import ViperCanvas from "./ViperCanvas";
 
-import { createSimpleEmitter } from "@solid-primitives/event-bus"
+import { createSimpleEmitter } from "@solid-primitives/event-bus";
 import state from "../../state";
 import _ from "lodash";
 import { generateAllInstructions } from "../../workers/workers";
 
 export default function Main() {
-  const [listen, emit] = createSimpleEmitter()
+  const [listen, emit] = createSimpleEmitter();
 
-  const throttleSetVisibleRange = _.throttle(
-    calculateNewVisibleRange,
-    16
-  )
+  const throttleSetVisibleRange = _.throttle(calculateNewVisibleRange, 16);
 
   let change = { x: 0, y: 0 };
   let layerToMove;
@@ -21,7 +18,7 @@ export default function Main() {
     if (eventId === "onWheel") onWheel(e);
     if (eventId === "onDragToResize") onDragToResize(e);
     if (eventId === "onDoubleClick") onDoubleClick(e);
-  })
+  });
 
   function onDragToResize({ movementX, movementY, layerY }) {
     if (!layerToMove) {
@@ -64,10 +61,7 @@ export default function Main() {
       let { min, max } = layer.range;
 
       // If zoom on Y axis
-      if (
-        e.ctrlKey ||
-        e.shiftKey
-      ) {
+      if (e.ctrlKey || e.shiftKey) {
         layer.lockedYScale = false;
         const { top, height } = dimensions.main.layers.get()[layerId];
 
@@ -140,10 +134,7 @@ export default function Main() {
       max += priceMoved;
     }
 
-    state.chart.setVisibleRange(
-      { start, end, min, max },
-      layerToMove
-    );
+    state.chart.setVisibleRange({ start, end, min, max }, layerToMove);
   }
 
   return (

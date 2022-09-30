@@ -1,134 +1,88 @@
+import { GridStack } from "gridstack";
 import { uniqueId } from "lodash";
 import { v } from "../api/api";
 import utils from "../pane/chart/utils";
 
+/** @type {GridStack|null} */
+let grid = null;
+
 export const selectedPage = v("");
 export const panes = v({});
 
-/**
- * Create a new pane
- * @param {number} top 0-100
- * @param {number} left 0-100
- * @param {number} width 0-100
- * @param {number} height 0-100
- * @returns {Pane}
- */
-export function createPane(top, left, width, height) {
+export function createPane() {
   const id = uniqueId();
 
-  // Create a new pane
-  /** @type {ReactivePane} */
   const pane = v({
     id,
-    pos: {
-      top: v(top),
-      left: v(left),
-      width: v(width),
-      height: v(height),
-    },
-    color: utils.randomHexColor(),
+    element: grid.addWidget({ w: 2, h: 2 }),
+    pos: undefined,
   });
 
-  // Add to state
   panes.set(v => ({ ...v, [id]: pane }));
-
-  // Check if pane dimensions get in the way of any other panes
-  checkForOverlappingPanes(pane);
 
   return pane;
 }
 
 /**
- * Check if any panes overlap with the pane in question
- * @param {Pane} pane
+ * On new Grid item(s)
+ * @param {Event} event
+ * @param {import("gridstack").GridStackNode[]} items
  */
-export function checkForOverlappingPanes(pane) {
-  const { id, pos } = pane.get();
+function onAdded(event, items) {
+  updatePanePositions(items);
+}
 
-  const A = {
-    x1: pos.left.get(),
-    y1: pos.top.get(),
-    x2: pos.left.get() + pos.width.get(),
-    y2: pos.top.get() + pos.height.get(),
-  };
+/**
+ * On any Grid item change event
+ * @param {Event} event
+ * @param {import("gridstack").GridStackNode[]} items
+ */
+function onChange(event, items) {
+  updatePanePositions(items);
+}
 
-  // Get all pane Ids excluding comparison pane
-  const paneIds = Object.keys(panes.get());
-  paneIds.splice(paneIds.indexOf(id), 1);
+/**
+ * Update pane positions
+ * @param {import("gridstack").GridStackNode[]} items
+ */
+function updatePanePositions(items) {
+  // Loop through all new items
+  for (const item of items) {
+    const values = Object.values(panes.get());
 
-  //  Loop through all panes and check for horizontal overlap
-  for (const paneId of paneIds) {
-    const { set, get } = panes.get()[paneId];
+    // Find correct pane that matches element
+    const pane = values.find(v => v.get().element === item.el);
 
-    const { pos } = get();
-    const B = {
-      x1: pos.left.get(),
-      y1: pos.top.get(),
-      x2: pos.left.get() + pos.width.get(),
-      y2: pos.top.get() + pos.height.get(),
-    };
+    // Add pos property for
+    pane.set(v => ({
+      ...v,
+      pos: {
+        x: item.x,
+        y: item.y,
+        w: item.w,
+        h: item.h,
+      },
+    }));
 
-    const res = intersectingRect(A, B);
-    let { x, y, xx, yy, w, h } = res;
-    if (w <= 0 || h <= 0) continue;
-
-    // If width is greater than height subtract height from box
-    if (w >= h) {
-      // If overlay y is greater than overlap height
-      if (y - pos.top.get() >= h) {
-        console.log("h");
-        pos.height.set(v => v - h);
-      } else {
-        console.log("t");
-        pos.top.set(v => v + h);
-        pos.height.set(v => v - h);
-      }
-    }
-
-    // If height is greater than width, subtract width from box
-    else {
-      if (x - pos.left.get() >= w) {
-        console.log("w");
-        pos.width.set(v => v - w);
-      } else {
-        console.log("l");
-        pos.left.set(v => v + w);
-        pos.width.set(v => v - w);
-      }
-    }
+    console.log(pane.get().pos);
   }
 }
 
-function intersectingRect(r1, r2) {
-  var x = Math.max(r1.x1, r2.x1);
-  var y = Math.max(r1.y1, r2.y1);
-  var xx = Math.min(r1.x2, r2.x2);
-  var yy = Math.min(r1.y2, r2.y2);
+export default {
+  /**
+   * Init panes store
+   * @param {Object} param0
+   * @param {HTMLElement} param0.gridContainer
+   * @param {Object} param0.options
+   */
+  init({ gridContainer, options = {} }) {
+    grid = GridStack.addGrid(gridContainer, options);
+    console.log(grid, gridContainer);
+    grid.on("added", onAdded);
+    grid.on("change", onChange);
+  },
 
-  return {
-    x: x,
-    y: y,
-    w: xx - x,
-    h: yy - y,
-  };
-}
-
-/**
- * @typedef {Object} ReactivePane
- * @property {function():Pane} get
- * @property {function(Pane)} set
- */
-
-/**
- * @typedef {Object} Pane
- * @property {string} id
- * @property {PaneDimensions} pos
- */
-
-/**
- * @typedef {Object} PaneDimensions
- * @property {ReactiveNumber} top
- * @property {ReactiveNumber} left
- * @property {ReactiveNumber} height
- * @property {ReactiveNumber} width
- */
+  destroy() {
+    grid.destroy();
+  },
+};

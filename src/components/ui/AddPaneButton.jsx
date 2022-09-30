@@ -12,7 +12,7 @@ export default function AddPaneButton() {
         className="relative w-[33vw] h-[15vw]"
       >
         <button
-          onClick={() => createPane(0, 0, 100, 100)}
+          onClick={[createPane]}
           className="absolute bottom-[0px] right-[0px] rounded-full bg-primary h-12 w-12 duration-[150ms]"
           classList={{ "opacity-[0]": !visible() }}
         >
