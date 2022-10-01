@@ -76,8 +76,6 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api = {} }) => ({
 
       render(() => <App $chart={this} />, this.element);
     } else if (event === "resize") {
-      console.log("resize");
-
       this.dimensions.setDimensions(
         this.element.clientWidth,
         this.element.clientHeight
@@ -281,7 +279,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api = {} }) => ({
       layer.set(v => ({ ...v, visible: false }));
     }
 
-    updateLayers();
+    this.dimensions.updateLayers();
 
     this.workers.generateAllInstructions();
   },
@@ -326,6 +324,8 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api = {} }) => ({
       ...v,
       [id]: renderedLayer,
     }));
+
+    this.dimensions.updateLayers();
 
     return id;
   },
