@@ -22,3 +22,7 @@
 button:disabled {
   cursor: not-allowed;
 }
+
+.grid-stack .ui-draggable {
+  cursor: move;
+}

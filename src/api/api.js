@@ -1,5 +1,5 @@
-import '../types';
-import { createSignal } from 'solid-js';
+import "../types";
+import { createSignal } from "solid-js";
 
 /**
  * Returns a value with reactive get() and set() function

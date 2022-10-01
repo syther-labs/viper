@@ -1,5 +1,6 @@
 import { GridStack } from "gridstack";
 import { uniqueId } from "lodash";
+import { createEffect } from "solid-js";
 import { v } from "../api/api";
 import utils from "../pane/chart/utils";
 
@@ -8,6 +9,7 @@ let grid = null;
 
 export const selectedPage = v("");
 export const panes = v({});
+export const gridEdit = v(false);
 
 export function createPane() {
   const id = uniqueId();
@@ -71,6 +73,13 @@ function updatePanePositions(items) {
   }
 }
 
+createEffect(() => {
+  const value = gridEdit.get();
+  if (!grid) return;
+  grid.enableMove(value);
+  grid.enableResize(value);
+});
+
 export default {
   /**
    * Init panes store
@@ -82,6 +91,9 @@ export default {
     grid = GridStack.addGrid(gridContainer, options);
     grid.on("added", onAdded);
     grid.on("change", onChange);
+
+    grid.enableMove(false);
+    grid.enableResize(false);
   },
 
   destroy() {

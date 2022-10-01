@@ -17,8 +17,6 @@ const keybinds = {};
  * @param {KeyboardEvent} e
  */
 function onKeyDown(e) {
-  e.preventDefault();
-
   // If not already in an input
 
   if (!keyCombo.includes(e.code)) {
@@ -31,8 +29,6 @@ function onKeyDown(e) {
  * @param {KeyboardEvent} e
  */
 function onKeyUp(e) {
-  e.preventDefault();
-
   const id = keyCombo.join("+");
   const keybind = keybinds[id];
 

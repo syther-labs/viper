@@ -8,6 +8,7 @@ import PanesView from "./components/ui/PanesView";
 import FloatingWindow from "./components/ui/FloatingWindow";
 import Spotlight from "./components/ui/Spotlight";
 import Navbar from "./components/ui/Navbar";
+import FangSearch from "./components/ui/FangSearch";
 
 export default function App() {
   return (
@@ -22,6 +23,8 @@ export default function App() {
       <For each={Object.keys(windows.get())}>
         {id => <FloatingWindow {...windows.get()[id].get()} id={id} />}
       </For>
+
+      {/* <FangSearch /> */}
 
       <Show when={false} children={<Spotlight />} />
     </div>
