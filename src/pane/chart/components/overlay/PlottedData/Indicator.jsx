@@ -1,19 +1,18 @@
 import { Match, Switch } from "solid-js";
-import state from "../../../state";
 import ItemWithControls from "./ItemWithControls";
 
 export default function Indicator(props) {
-  const { indicatorId, dataset } = props;
+  const { $chart, indicatorId, dataset } = props;
 
-  const indicator = state.indicators.get()[indicatorId];
+  const indicator = $chart.indicators.get()[indicatorId];
 
   function onToggleVisible() {
     const { renderingQueueId, visible } = indicator.get();
-    state.chart.setIndicatorVisibility(renderingQueueId, !visible)
+    $chart.setIndicatorVisibility(renderingQueueId, !visible);
   }
 
   function onRemove() {
-    state.chart.removeIndicator(indicator);
+    $chart.removeIndicator(indicator);
   }
 
   return (

@@ -3,6 +3,8 @@ import { Show } from "solid-js";
 import Panes, { panes, createPane } from "../../stores/panes";
 import { Button } from "../components";
 
+import Chart from "../../pane/chart";
+
 export default function PanesView() {
   /** @type {HTMLElement} */
   let gridContainer;
@@ -31,7 +33,11 @@ function NoPanes() {
     <div className="absolute top-0 left-0 flex items-center justify-center h-full w-full">
       <div className="flex flex-col items-center justify-center">
         <h2 className="font-bold text-2xl mb-2">This layout has no panes</h2>
-        <Button variant="primary-outline" size="md" onClick={[createPane]}>
+        <Button
+          variant="primary-outline"
+          size="md"
+          onClick={[createPane, Chart]}
+        >
           Add a pane
           <span className="inline-block opacity-75 text-xs ml-2">
             <div className="flex items-center">

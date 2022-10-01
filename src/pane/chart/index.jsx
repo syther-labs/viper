@@ -1,90 +1,113 @@
 /* @refresh reload */
-import { render } from 'solid-js/web';
+import { render } from "solid-js/web";
 
-import App from './App';
+import App from "./App";
 
-import utils from './utils';
+import utils from "./utils";
 
-import { v } from '../../api/api';
+import { v } from "../../api/api";
 
-import state, { initState } from './state';
-import API from '../../api/api.js';
-import dimensions, {
-  setDimensions,
-  updateLayers,
-} from './local-state/dimensions';
-import {
-  addToQueue,
-  calculateOneSet,
-  generateAllInstructions,
-  setIndicatorVisibility,
-} from './workers/workers.js';
+import API from "../../api/api.js";
+import dimensions from "./local-state/dimensions";
+import workers from "./workers/workers.js";
 
-export default class Chart {
+/**
+ * Create a new chart
+ * @param {Object} param0
+ * @param {HTMLElement} param0.element The element to render the chart inside
+ * @param {number} param0.timeframe Initial value for viewing timeframe (defaults to 3.6e6)
+ * @param {Object} param0.$api The API for communicating with parent
+ */
+export default ({ element, timeframe = 3.6e6, config = {}, $api = {} }) => ({
+  // Parent stuff
+  element,
+  $api,
+
+  // Pane config
+  config: v({
+    showTimeframes: v(true),
+    timeframes: v([]),
+    ...config,
+  }),
+
+  // Chart state
+  timeframe: v(timeframe),
+  name: v("Untitled chart"),
+  plots: v([]),
+  indicators: v({}),
+  ranges: {
+    x: v({
+      start: undefined,
+      end: undefined,
+    }),
+    y: v({}),
+  },
+  renderedRanges: {
+    x: v({
+      start: undefined,
+      end: undefined,
+    }),
+    y: v({}),
+  },
+  pixelsPerElement: v(10),
+
   /**
-   * Create a new chart
-   * @param {Object} param0
-   * @param {HTMLElement} param0.element The element to render the chart inside
-   * @param {number} param0.timeframe Initial value for viewing timeframe (defaults to 3.6e6)
-   * @param {Object} param0.$api The API for communicating with parent
+   * On parent emitted events
+   * @param {("resize","mounted")} event
+   * @param {*} data
    */
-  constructor({
-    element,
-    timeframe = 3.6e6,
+  on(event, data) {
+    if (event === "mounted") {
+      this.dimensions = dimensions({ $chart: this });
+      this.workers = workers({ $chart: this });
+      this.workers.init();
 
-    config = {},
-    $api = new API({}),
-  }) {
-    this.element = element;
-    this.$api = $api;
-    this.state = state;
+      this.dimensions.setDimensions(
+        this.element.clientWidth,
+        this.element.clientHeight
+      );
 
-    initState({ chart: this });
-    state.timeframe.set(timeframe);
+      // If no ranges, create a default one
+      if (!Object.keys(this.ranges.y.get()).length) {
+        this.addLayer(10);
+      }
 
-    // Initially set dimensions based on element width and height
-    setDimensions(element.clientWidth, element.clientHeight);
+      this.setInitialVisibleRange();
 
-    // Set all config keys
-    for (const key in config) {
-      state.config[key].set(config[key]);
+      render(() => <App $chart={this} />, this.element);
+    } else if (event === "resize") {
+      console.log("resize");
+
+      this.dimensions.setDimensions(
+        this.element.clientWidth,
+        this.element.clientHeight
+      );
+
+      this.setVisibleRange({});
     }
-
-    this.init();
-
-    render(() => <App />, this.element);
-  }
-
-  init() {
-    // If no ranges, create a default one
-    if (!Object.keys(state.ranges.y.get()).length) {
-      this.addLayer(10);
-    }
-
-    this.setInitialVisibleRange();
-  }
+  },
 
   setInitialVisibleRange() {
-    let { start, end } = state.ranges.x.get();
-    const timeframe = state.timeframe.get();
-    const width = dimensions.main.width.get();
+    let { start, end } = this.ranges.x.get();
+    const timeframe = this.timeframe.get();
+    const width = this.dimensions.main.width.get();
 
     const endTimestamp = Math.floor(Date.now() / timeframe) * timeframe;
-    state.pixelsPerElement.set(10);
+    this.pixelsPerElement.set(10);
 
-    const candlesInView = width / state.pixelsPerElement.get();
+    const candlesInView = width / this.pixelsPerElement.get();
     end = endTimestamp + timeframe * 10;
     start = end - candlesInView * timeframe;
 
     this.setVisibleRange({ start, end });
-  }
+  },
 
   setVisibleRange(
     newRange = {},
-    layerId = Object.keys(state.ranges.y.get())[0]
+    layerId = Object.keys(this.ranges.y.get())[0]
   ) {
-    const xRange = state.ranges.x.get();
-    const yRange = state.ranges.y.get()[layerId].get().range;
+    const xRange = this.ranges.x.get();
+    const yRange = this.ranges.y.get()[layerId].get().range;
 
     const {
       start = xRange.start,
@@ -95,23 +118,23 @@ export default class Chart {
 
     // If x range changed
     if (start !== xRange.start || end !== xRange.end) {
-      state.ranges.x.set({ start, end });
+      this.ranges.x.set({ start, end });
     }
 
     if (min !== yRange.min || max !== yRange.max) {
-      state.ranges.y.get()[layerId].set(v => ({
+      this.ranges.y.get()[layerId].set(v => ({
         ...v,
         range: { min, max },
       }));
     }
 
-    generateAllInstructions();
-  }
+    this.workers.generateAllInstructions();
+  },
 
   resizeXRange(change, left = 0.5, right = 0.5) {
-    const width = dimensions.main.width.get();
+    const width = this.dimensions.main.width.get();
 
-    let { start, end } = state.ranges.x.get();
+    let { start, end } = this.ranges.x.get();
     let range = end - start;
 
     if (change < 0) {
@@ -123,17 +146,17 @@ export default class Chart {
     }
 
     // Calcualte new pixels per element based on new range
-    const ppe = width / ((end - start) / state.timeframe.get());
+    const ppe = width / ((end - start) / this.timeframe.get());
 
     // If pixels per element is less than 1 or greater than 1000, dont apply changes
     if (ppe < 1 || ppe > 1000) return;
 
     this.setVisibleRange({ start, end });
-  }
+  },
 
   createDatasetGroup({ source, name }) {
     const dataset = v({
-      type: 'Dataset',
+      type: "Dataset",
       visible: true,
       values: {
         datasetName: `${source}:${name}`,
@@ -141,14 +164,14 @@ export default class Chart {
       },
     });
 
-    state.plots.set([...state.plots.get(), dataset]);
+    this.plots.set([...this.plots.get(), dataset]);
 
     return dataset;
-  }
+  },
 
   setDatasetVisibility(index, visible) {
     // Get the dataset from plot map
-    const dataset = state.plots.get()[index];
+    const dataset = this.plots.get()[index];
 
     // Loop through all indicators and set their visibility
     for (const indicatorId of dataset.get().values.indicatorIds) {
@@ -157,15 +180,15 @@ export default class Chart {
 
     // Set the dataset visibility
     dataset.set(v => ({ ...v, visible }));
-  }
+  },
 
   async addIndicator(
     indicator,
     dataset,
     model,
-    { visible = true, layerId = Object.keys(state.ranges.y.get())[0] }
+    { visible = true, layerId = Object.keys(this.ranges.y.get())[0] }
   ) {
-    if (!layerId || !state.ranges.y.get()[layerId]) {
+    if (!layerId || !this.ranges.y.get()[layerId]) {
       layerId = this.addLayer(3);
     }
 
@@ -180,14 +203,14 @@ export default class Chart {
       layerId,
     };
 
-    const { renderingQueueId } = await addToQueue({ indicator });
+    const { renderingQueueId } = await this.workers.addToQueue({ indicator });
 
     indicator.renderingQueueId = renderingQueueId;
 
     // Create the indicator to be added to state
     indicator = v(indicator);
 
-    state.indicators.set(v => ({
+    this.indicators.set(v => ({
       ...v,
       [renderingQueueId]: indicator,
     }));
@@ -199,12 +222,12 @@ export default class Chart {
     });
 
     const { datasetName } = dataset.get().values;
-    const [source, name] = datasetName.split(':');
-    const { start, end } = state.ranges.x.get();
-    const timeframe = state.timeframe.get();
+    const [source, name] = datasetName.split(":");
+    const { start, end } = this.ranges.x.get();
+    const timeframe = this.timeframe.get();
 
     // Request data from master
-    const data = await state.chart.$api.requestData({
+    const data = await this.$api.requestData({
       source,
       name,
       timeframe,
@@ -214,7 +237,7 @@ export default class Chart {
     });
 
     // Calcualte new data
-    calculateOneSet({
+    this.workers.calculateOneSet({
       renderingQueueId,
       timestamps: Object.keys(data),
       dataset: {
@@ -224,21 +247,21 @@ export default class Chart {
         data,
       },
     });
-  }
+  },
 
   setIndicatorVisibility(renderingQueueId, visible) {
-    const indicators = state.indicators.get();
+    const indicators = this.indicators.get();
     const indicator = indicators[renderingQueueId];
 
     indicator.set(v => ({ ...v, visible }));
 
-    setIndicatorVisibility({
+    this.workers.setIndicatorVisibility({
       renderingQueueId,
       visible,
     });
 
     // Check if any indicators in layer are visible
-    const layer = state.ranges.y.get()[indicator.get().layerId];
+    const layer = this.ranges.y.get()[indicator.get().layerId];
     let found = false;
 
     // Loop through all indicators and see if any are using same layerId and visible
@@ -260,8 +283,8 @@ export default class Chart {
 
     updateLayers();
 
-    generateAllInstructions();
-  }
+    this.workers.generateAllInstructions();
+  },
 
   removeIndicator(indicator) {
     const { id, dataset } = indicator.get();
@@ -272,11 +295,11 @@ export default class Chart {
     dataset.set(v => ({ ...v }));
 
     // Delete from indicators store
-    state.indicators.set(v => {
+    this.indicators.set(v => {
       delete v[id];
       return { ...v };
     });
-  }
+  },
 
   addLayer(heightUnit) {
     const id = utils.uniqueId();
@@ -287,28 +310,28 @@ export default class Chart {
       lockedYScale: true,
       visible: true,
       fullscreen: false,
-      scaleType: 'default',
+      scaleType: "default",
       indicators: {},
       range: { min: Infinity, max: -Infinity },
     });
 
-    state.ranges.y.set(v => ({
+    this.ranges.y.set(v => ({
       ...v,
       [id]: layer,
     }));
 
     const renderedLayer = v({ range: { min: Infinity, max: -Infinity } });
 
-    state.renderedRanges.y.set(v => ({
+    this.renderedRanges.y.set(v => ({
       ...v,
       [id]: renderedLayer,
     }));
 
     return id;
-  }
+  },
 
   getLayerByYCoord(yCoord) {
-    const layers = dimensions.main.layers.get();
+    const layers = this.dimensions.main.layers.get();
     const ids = Object.keys(layers).filter(id => layers[id].height > 0);
 
     for (let i = 0; i < ids.length; i++) {
@@ -321,7 +344,7 @@ export default class Chart {
       // If between top and bottom of layer in question
       if (yCoord >= l1.top && yCoord <= l2.top) return ids[i];
     }
-  }
+  },
 
   /**
    *
@@ -332,7 +355,7 @@ export default class Chart {
    * @param {string} param0.dataModel Data model id
    * @param {any[]} datapoints Array of new data points
    */
-  addData({ source, name, timeframe, dataModel }, datapoints) {}
+  addData({ source, name, timeframe, dataModel }, datapoints) {},
 
-  destroy() {}
-}
+  destroy() {},
+});

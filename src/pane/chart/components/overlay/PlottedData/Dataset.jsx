@@ -1,20 +1,20 @@
 import { For } from "solid-js";
-import state from "../../../state";
 import Indicator from "./Indicator";
 import ItemWithControls from "./ItemWithControls";
 
 export default function DatasetGroup(props) {
-  const dataset = state.plots.get()[props.index];
+  const { $chart, index } = props;
+  const dataset = $chart.plots.get()[index];
 
   function onToggleVisible() {
     const { visible } = dataset.get();
-    state.chart.setDatasetVisibility(props.index, !visible);
+    $chart.setDatasetVisibility(index, !visible);
   }
 
   function onRemove() {
-    const plots = state.plots.get();
-    plots.splice(props.index, 1);
-    state.plots.set([...plots]);
+    const plots = $chart.plots.get();
+    plots.splice(index, 1);
+    $chart.plots.set([...plots]);
   }
 
   return (
@@ -27,7 +27,7 @@ export default function DatasetGroup(props) {
           <div className="font-bold">{dataset.get().values.datasetName}</div>
           <ul className="text-[0.66rem]">
             <For each={dataset.get().values.indicatorIds}>
-              {(indicatorId) => (
+              {indicatorId => (
                 <li className="ml-2 my-1">
                   <div className="grow">
                     <Indicator

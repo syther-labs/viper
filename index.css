@@ -23,6 +23,20 @@ button:disabled {
   cursor: not-allowed;
 }
 
+.grid-stack .grid-stack-item-content {
+  inset: 0px !important;
+}
+
 .grid-stack .ui-draggable {
   cursor: move;
+}
+
+.grid-stack .resize-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 99;
+  cursor: move;
+  width: 100%;
+  height: 100%;
 }

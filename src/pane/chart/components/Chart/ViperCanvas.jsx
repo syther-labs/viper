@@ -4,7 +4,7 @@ import RenderingEngine from "../../lib/rendering-engine";
 import utils from "../../utils";
 
 export default function ViperCanvas(props) {
-  const { emit, type, height, width } = props;
+  const { $chart, emit, type, height, width } = props;
 
   let canvasEl;
   let canvas;
@@ -15,18 +15,18 @@ export default function ViperCanvas(props) {
     mouseDown = true;
     window.addEventListener("mouseup", onMouseUp);
     window.addEventListener("mousemove", onDragToResize);
-    emit("onMouseDown", e)
+    emit("onMouseDown", e);
   }
 
   function onMouseUp(e) {
     mouseDown = false;
     window.removeEventListener("mouseup", onMouseUp);
     window.removeEventListener("mousemove", onDragToResize);
-    emit("onMouseUp", e)
+    emit("onMouseUp", e);
   }
 
   function onDragToResize(e) {
-    emit("onDragToResize", e)
+    emit("onDragToResize", e);
   }
 
   function onWheel(e) {
@@ -40,14 +40,15 @@ export default function ViperCanvas(props) {
   onMount(() => {
     canvas = new Canvas({
       canvas: canvasEl,
+      $chart: props.$chart,
       type,
-    })
-  })
+    });
+  });
 
   onCleanup(() => {
     window.removeEventListener("mouseup", onMouseUp);
     window.removeEventListener("mousemove", onDragToResize);
-  })
+  });
 
   return (
     <canvas
@@ -63,15 +64,14 @@ export default function ViperCanvas(props) {
 }
 
 class Canvas {
-  constructor({ $state, canvas, type = "" }) {
-    this.$state = $state;
-
+  constructor({ $chart, canvas, type = "" }) {
     this.canvas = canvas;
     this.ctx = this.canvas.getContext("2d");
     this.RE = new RenderingEngine({
       canvas: this,
+      $chart,
       type,
-    });;
+    });
     this.type = type;
   }
 

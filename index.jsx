@@ -17,7 +17,7 @@ export default class Viper {
   constructor({ element }) {
     global.element = element;
 
-    render(<App />, element);
+    render(() => <App />, element);
 
     this.init();
   }

@@ -1,7 +1,6 @@
 import { v } from "../../../../packages/api";
 import { Index } from "solid-js";
 import plot_types from "../../../../packages/pane/chart/src/data/plot_types";
-import state from "../../../../packages/pane/chart/src/state";
 import utils from "../../../../packages/pane/chart/src/utils";
 
 export default function AddIndicatorModal() {
@@ -19,7 +18,7 @@ export default function AddIndicatorModal() {
     <div className="flex flex-col h-full">
       <ul className="flex flex-wrap mx-[-0.5rem] mb-3">
         <Index each={modelIds}>
-          {(modelId) => (
+          {modelId => (
             <li className="mx-[0.5rem]">
               <button
                 onClick={() => tab.set(modelId())}
@@ -36,7 +35,7 @@ export default function AddIndicatorModal() {
       </ul>
       <ul className="grow overflow-y-scroll">
         <Index each={Object.keys(plot_types.bases)}>
-          {(id) => {
+          {id => {
             const indicator = plot_types.bases[id()];
 
             return (

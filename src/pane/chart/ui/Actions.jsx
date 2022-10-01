@@ -1,10 +1,9 @@
 import { Index } from "solid-js";
 import { getTimeframeText } from "../data/timeframes";
-import state from "../state";
 
-export default function Timeframes() {
+export default function Timeframes({ $chart }) {
   function showAddDataModal() {
-    state.ui.modal.set({
+    $chart.ui.modal.set({
       visible: true,
       title: "Plot data",
       component: AddDataModal,
@@ -22,15 +21,15 @@ export default function Timeframes() {
           <span className="leading-0">Plot Data</span>
         </button>
       </li>
-      <Index each={state.config.timeframes.get()}>
-        {(timeframe) => (
+      <Index each={$chart.config.timeframes.get()}>
+        {timeframe => (
           <li>
             <button
-              onClick={() => state.timeframe.set(timeframe())}
+              onClick={() => $chart.timeframe.set(timeframe())}
               className="p-2"
               classList={{
                 "bg-gray-300 text-gray-900 font-bold":
-                  state.timeframe.get() === timeframe(),
+                  $chart.timeframe.get() === timeframe(),
               }}
             >
               {getTimeframeText(timeframe())}

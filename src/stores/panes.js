@@ -1,5 +1,5 @@
 import { GridStack } from "gridstack";
-import { uniqueId } from "lodash";
+import _, { padEnd, uniqueId } from "lodash";
 import { createEffect } from "solid-js";
 import { v } from "../api/api";
 import utils from "../pane/chart/utils";
@@ -11,31 +11,39 @@ export const selectedPage = v("");
 export const panes = v({});
 export const gridEdit = v(false);
 
-export function createPane() {
+export function createPane(PaneApp) {
   const id = uniqueId();
+
+  const gridItem = grid.addWidget({ w: 6, h: 4 });
+  const element = gridItem.querySelector(".grid-stack-item-content");
 
   const pane = v({
     id,
-    element: grid.addWidget({ w: 2, h: 2 }),
+    gridItem,
+    element,
+    appType: "chart",
     pos: undefined,
   });
 
+  const app = PaneApp({
+    element,
+    config: {},
+  });
+  if (typeof app.on !== "function") app.on = () => {};
+
+  // Update the pane with the app
+  pane.set(v => ({
+    ...v,
+    app,
+  }));
+
   panes.set(v => ({ ...v, [id]: pane }));
 
+  updatePanePositions([gridItem]);
+
+  app.on("mounted");
+
   return pane;
-}
-
-/**
- * On new Grid item(s)
- * @param {Event} event
- * @param {import("gridstack").GridStackNode[]} items
- */
-function onAdded(event, items) {
-  updatePanePositions(items);
-
-  items.forEach(item => {
-    item.el.style.border = "1px solid #fff";
-  });
 }
 
 /**
@@ -44,32 +52,39 @@ function onAdded(event, items) {
  * @param {import("gridstack").GridStackNode[]} items
  */
 function onChange(event, items) {
-  updatePanePositions(items);
+  updatePanePositions(items.map(item => item.el));
 }
 
 /**
  * Update pane positions
- * @param {import("gridstack").GridStackNode[]} items
+ * @param {HTMLElement} elements
  */
-function updatePanePositions(items) {
+function updatePanePositions(elements) {
   // Loop through all new items
-  for (const item of items) {
+  for (const el of elements) {
     const values = Object.values(panes.get());
 
     // Find correct pane that matches element
-    const pane = values.find(v => v.get().element === item.el);
-    if (!pane) continue;
+    const pane = values.find(v => v.get().gridItem === el);
+
+    const { pos: oldPos, app } = pane.get();
+    const newPos = {
+      x: +el.getAttribute("gs-x"),
+      y: +el.getAttribute("gs-y"),
+      w: +el.getAttribute("gs-w"),
+      h: +el.getAttribute("gs-h"),
+    };
 
     // Add pos property for
     pane.set(v => ({
       ...v,
-      pos: {
-        x: item.x,
-        y: item.y,
-        w: item.w,
-        h: item.h,
-      },
+      pos: newPos,
     }));
+
+    // If height or width have changed
+    if (oldPos && (oldPos.w !== newPos.w || oldPos.h !== newPos.h)) {
+      app.on("resize");
+    }
   }
 }
 
@@ -78,7 +93,40 @@ createEffect(() => {
   if (!grid) return;
   grid.enableMove(value);
   grid.enableResize(value);
+
+  // If grid edit true
+  if (value) {
+    for (const pane of Object.values(panes.get())) {
+      const { element } = pane.get();
+      if (element.querySelector(".resize-container")) continue;
+      createResizeContainerElement(element);
+    }
+  } else {
+    for (const div of document.querySelectorAll(".resize-container")) {
+      div.remove();
+    }
+  }
 });
+
+/**
+ * Append a div to Grid Item (Pane) to capture mouse move
+ * @param {HTMLElement} element
+ */
+const createResizeContainerElement = element => {
+  const div = document.createElement("div");
+  div.classList.add("resize-container");
+  element.appendChild(div);
+};
+
+let windowResizeTimeout;
+const onWindowResize = _.throttle(() => {
+  windowResizeTimeout = setTimeout(() => {
+    for (const pane of Object.values(panes.get())) {
+      const { app } = pane.get();
+      app.on("resize");
+    }
+  }, 1000);
+}, 100);
 
 export default {
   /**
@@ -89,8 +137,9 @@ export default {
    */
   init({ gridContainer, options = {} }) {
     grid = GridStack.addGrid(gridContainer, options);
-    grid.on("added", onAdded);
     grid.on("change", onChange);
+
+    window.addEventListener("resize", onWindowResize);
 
     grid.enableMove(false);
     grid.enableResize(false);
@@ -98,5 +147,7 @@ export default {
 
   destroy() {
     grid.destroy();
+    window.removeEventListener("resize", onWindowResize);
+    clearTimeout(windowResizeTimeout);
   },
 };

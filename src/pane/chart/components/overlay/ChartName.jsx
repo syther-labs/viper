@@ -1,8 +1,7 @@
 import { v } from "../../../../api/api";
 import { createEffect, Show } from "solid-js";
-import state from "../../state";
 
-export default function ChartName() {
+export default function ChartName({ $chart }) {
   let inputRef;
 
   const isEdit = v(false);
@@ -12,7 +11,7 @@ export default function ChartName() {
 
     const { value } = event.target;
     isEdit.set(false);
-    state.name.set(value);
+    $chart.name.set(value);
   }
 
   function onKeyUp(event) {
@@ -22,7 +21,7 @@ export default function ChartName() {
       isEdit.set(false);
     } else if (code === "Enter") {
       isEdit.set(false);
-      state.name.set(event.target.value);
+      $chart.name.set(event.target.value);
     }
   }
 
@@ -39,13 +38,13 @@ export default function ChartName() {
           onClick={() => isEdit.set(true)}
           className="border-2 border-transparent"
         >
-          {state.name.get()}
+          {$chart.name.get()}
         </button>
       </Show>
       <Show when={isEdit.get()}>
         <input
           ref={inputRef}
-          value={state.name.get()}
+          value={$chart.name.get()}
           onBlur={onBlur}
           onKeyUp={onKeyUp}
           className="bg-transparent border-2"

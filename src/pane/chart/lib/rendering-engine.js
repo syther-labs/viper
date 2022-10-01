@@ -1,7 +1,4 @@
-import dimensions from "../local-state/dimensions.js";
-import state from "../state.js";
 import Utils from "../utils.js";
-import { instructions } from "../workers/workers.js";
 
 /**
  * Handles render queue and layers including order
@@ -11,7 +8,8 @@ export default class RenderingEngine {
    * @param {Canvas} canvas
    * @param {object} settings
    */
-  constructor({ canvas, type, settings }) {
+  constructor({ $chart, canvas, type, settings }) {
+    this.$chart = $chart;
     this.canvas = canvas;
     this.type = type;
 
@@ -39,7 +37,7 @@ export default class RenderingEngine {
    * This can be used for when user interacts with the window like resizing
    */
   draw() {
-    const instr = instructions[this.type];
+    const instr = this.$chart.workers.instructions[this.type];
 
     // Reset canvas
     this.canvas.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -48,16 +46,11 @@ export default class RenderingEngine {
       const now = Date.now();
       let isShowingCountdown = false;
 
-      const width = dimensions.yScale.width.get();
-      const height = dimensions.yScale.height.get();
+      const width = this.$chart.dimensions.yScale.width.get();
+      const height = this.$chart.dimensions.yScale.height.get();
 
       // Draw background
-      this.canvas.drawBox("#080019", [
-        0,
-        0,
-        width,
-        height,
-      ]);
+      this.canvas.drawBox("#080019", [0, 0, width, height]);
 
       let maxWidth = 0;
 
@@ -90,10 +83,7 @@ export default class RenderingEngine {
         // Draw realtime countdown to next timeframe
         if (!isShowingCountdown) {
           const timeLeftY = box.y + box.h;
-          const timeLeft = Utils.formatTimeLeft(
-            now,
-            state.timeframe.get(),
-          );
+          const timeLeft = Utils.formatTimeLeft(now, $chart.timeframe.get());
           this.canvas.drawBox(box.color, [box.x, timeLeftY, box.w, box.h]);
           this.canvas.drawText(
             text.color,
@@ -112,30 +102,30 @@ export default class RenderingEngine {
       // Check if maxWidth is not equal to current width of yScale
       const newScale = Math.floor(maxWidth / 5);
       const existingScale = Math.floor(width / 5);
-    //   TODO reimplement
+      //   TODO reimplement
       if (newScale !== existingScale) {
         // chartDimensions.setYScaleWidth(maxWidth);
-        // this.$state.chart.setVisibleRange({});
+        // this.$$chart.chart.setVisibleRange({});
       }
 
       // Crosshair
-    //   const p = this.$state.global.crosshair.price;
-    //   const { y } =
-    //     this.$state.global.crosshair.crosshairs[this.$state.chart.id];
+      //   const p = this.$$chart.global.crosshair.price;
+      //   const { y } =
+      //     this.$$chart.global.crosshair.crosshairs[this.$$chart.chart.id];
 
-    //   if (this.$state.global.crosshair.visible) {
-    //     for (const id in y) {
-    //       const layer = this.$state.chart.ranges.y[id];
-    //       if (!layer) continue;
-    //       const text = Helpers.yScale.scales.scaleText(p, layer.scaleType);
+      //   if (this.$$chart.global.crosshair.visible) {
+      //     for (const id in y) {
+      //       const layer = this.$$chart.chart.ranges.y[id];
+      //       if (!layer) continue;
+      //       const text = Helpers.yScale.scales.scaleText(p, layer.scaleType);
 
-    //       this.canvas.drawBox("#424242", [0, y[id] - 10, width, 20]);
-    //       this.canvas.drawText("#fff", [width / 2, y[id] + 3], text);
-    //     }
-    //   }
+      //       this.canvas.drawBox("#424242", [0, y[id] - 10, width, 20]);
+      //       this.canvas.drawText("#fff", [width / 2, y[id] + 3], text);
+      //     }
+      //   }
 
       // Border left, top, right
-      const layers = dimensions.main.layers.get();
+      const layers = this.$chart.dimensions.main.layers.get();
       this.canvas.drawBox("#2E2E2E", [0, 0, width, 2]);
 
       // Border breakpoints / bottom
@@ -146,16 +136,11 @@ export default class RenderingEngine {
     }
 
     if (this.type === "xScale") {
-      const width = dimensions.xScale.width.get();
-      const height = dimensions.xScale.height.get();
+      const width = this.$chart.dimensions.xScale.width.get();
+      const height = this.$chart.dimensions.xScale.height.get();
 
       // Draw background
-      this.canvas.drawBox("#080019", [
-        0,
-        0,
-        width,
-        height,
-      ]);
+      this.canvas.drawBox("#080019", [0, 0, width, height]);
 
       // Draw all scales
       for (const { color, x, y, text } of instr.scales) {
@@ -163,7 +148,7 @@ export default class RenderingEngine {
       }
 
       // Crosshair
-      // const { crosshair } = this.$state.global;
+      // const { crosshair } = this.$$chart.global;
       // if (crosshair.visible) {
       //   const d = new Date(crosshair.timestamp);
 
@@ -175,7 +160,7 @@ export default class RenderingEngine {
 
       //   const text = `${da} ${mo} '${yr}  ${ho}:${mi}`;
 
-      //   const { x } = crosshair.crosshairs[this.$state.chart.id];
+      //   const { x } = crosshair.crosshairs[this.$$chart.chart.id];
       //   this.canvas.drawBox("#424242", [x - 45, 0, 90, 30]);
       //   this.canvas.drawText("#fff", [x, 15], text);
       // }
@@ -183,30 +168,25 @@ export default class RenderingEngine {
 
     if (this.type === "main") {
       // Cursor
-      // if (this.$state.global.events.mousedown) {
+      // if (this.$$chart.global.events.mousedown) {
       //   this.canvas.setCursor("grabbing");
-      // } else if (this.$state.global.events.keys.Control) {
+      // } else if (this.$$chart.global.events.keys.Control) {
       //   this.canvas.setCursor("zoom-in");
-      // } else if (this.$state.global.events.keys.Shift) {
+      // } else if (this.$$chart.global.events.keys.Shift) {
       //   this.canvas.setCursor("ns-resize");
       // } else if (this.canvas.cursor !== "crosshair") {
       //   this.canvas.setCursor("crosshair");
       // }
 
-      const width = dimensions.main.width.get();
-      const height = dimensions.main.height.get();
+      const width = this.$chart.dimensions.main.width.get();
+      const height = this.$chart.dimensions.main.height.get();
 
       // Draw background
-      this.canvas.drawBox("#080019", [
-        0,
-        0,
-        width,
-        height,
-      ]);
+      this.canvas.drawBox("#080019", [0, 0, width, height]);
 
       // Draw grid
       (() => {
-        const { xScale, yScale } = instructions;
+        const { xScale, yScale } = this.$chart.workers.instructions;
         const color = "#43434377";
 
         for (const { x } of xScale.scales) {
@@ -302,14 +282,14 @@ export default class RenderingEngine {
       }
 
       // Check if in fullscreen
-      const y = state.ranges.y.get();
+      const y = this.$chart.ranges.y.get();
       const found = Object.values(y)
         .map(y => y.get())
         .find(({ fullscreen }) => fullscreen);
       const borderColor = found ? "#0a6102" : "#2E2E2E";
 
       // Border left, top, right
-      const layers = dimensions.main.layers.get();
+      const layers = this.$chart.dimensions.main.layers.get();
       this.canvas.drawBox(borderColor, [0, 0, 2, height]);
       this.canvas.drawBox(borderColor, [0, 0, width, 2]);
       this.canvas.drawBox(borderColor, [width - 2, 0, 2, height]);

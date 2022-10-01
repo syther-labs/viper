@@ -12,7 +12,7 @@ import FangSearch from "./components/ui/FangSearch";
 
 export default function App() {
   return (
-    <div className="viper flex flex-col w-full h-full bg-z-10 text-z-1 relative text-xs">
+    <div className="viper flex flex-col w-full h-full bg-z-10 text-z-1 relative text-sm">
       <Navbar />
 
       <section className="grow relative overflow-auto">

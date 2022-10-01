@@ -1,13 +1,12 @@
 import { onCleanup, onMount } from "solid-js";
 import { Dynamic } from "solid-js/web";
-import state from "../state";
 
 export default function Modal() {
   let modalContent;
 
   function onKeyUp({ code }) {
     if (code === "Escape") {
-      state.ui.modal.set((v) => ({ ...v, visible: false }));
+      state.ui.modal.set(v => ({ ...v, visible: false }));
     }
   }
 
@@ -34,9 +33,7 @@ export default function Modal() {
             {state.ui.modal.get().title}
           </h1>
           <button
-            onClick={() =>
-              state.ui.modal.set((v) => ({ ...v, visible: false }))
-            }
+            onClick={() => state.ui.modal.set(v => ({ ...v, visible: false }))}
             className="text-xl h-12 w-12 flex items-center justify-center"
           >
             <i class="ri-close-line"></i>

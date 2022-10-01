@@ -1,26 +1,24 @@
-import dimensions from "../../local-state/dimensions";
 import ViperCanvas from "./ViperCanvas";
 
 import { createSimpleEmitter } from "@solid-primitives/event-bus";
-import state from "../../state";
 
-export default function yScale() {
+export default function yScale({ $chart }) {
   const [listen, emit] = createSimpleEmitter();
 
   let layerToMove;
 
-  listen((eventId, e) => {``
+  listen((eventId, e) => {
     if (eventId === "onDoubleClick") onDoubleClick(e);
     if (eventId === "onDragToResize") onDragToResize(e);
-  })
+  });
 
   function onDoubleClick(e) {
-    const layerId = state.chart.getLayerByYCoord(e.clientY);
-    const layer = state.ranges.y.get()[layerId];
+    const layerId = $chart.getLayerByYCoord(e.clientY);
+    const layer = $chart.ranges.y.get()[layerId];
 
     if (!layer.get().lockedYScale) {
-      layer.set(v => ({ ...v,lockedYScale: true }))
-      state.chart.setVisibleRange({});
+      layer.set(v => ({ ...v, lockedYScale: true }));
+      $chart.setVisibleRange({});
     }
   }
 
@@ -28,30 +26,38 @@ export default function yScale() {
     if (movementY === 0) return;
 
     if (!layerToMove) {
-      layerToMove = state.chart.getLayerByYCoord(layerY);
+      layerToMove = $chart.getLayerByYCoord(layerY);
     }
 
-    let { min, max } = state.ranges.y.get()[layerToMove].get().range;
+    let { min, max } = $chart.ranges.y.get()[layerToMove].get().range;
     const delta = max - min;
     const delta10P = delta * 0.01;
     const change = -movementY * delta10P;
     min += change;
     max -= change;
-    state.ranges.y.get()[layerToMove].set(v => ({ ...v, lockedYScale: false }))
-    chart.setVisibleRange({ min, max }, layerToMove);
+
+    const layer = $chart.ranges.y.get()[layerToMove];
+    layer.set(v => ({ ...v, lockedYScale: false }));
+
+    $chart.setVisibleRange({ min, max }, layerToMove);
   }
 
   return (
     <div
       className="absolute cursor-ns-resize"
       style={{
-        left: `${dimensions.main.width.get()}px`,
+        left: `${$chart.dimensions.main.width.get()}px`,
         top: 0,
-        width: `${dimensions.yScale.width.get()}px`,
-        height: `${dimensions.yScale.height.get()}px`,
+        width: `${$chart.dimensions.yScale.width.get()}px`,
+        height: `${$chart.dimensions.yScale.height.get()}px`,
       }}
     >
-      <ViperCanvas emit={emit} {...dimensions.yScale} type="yScale" />
+      <ViperCanvas
+        emit={emit}
+        {...$chart.dimensions.yScale}
+        $chart={$chart}
+        type="yScale"
+      />
     </div>
   );
 }

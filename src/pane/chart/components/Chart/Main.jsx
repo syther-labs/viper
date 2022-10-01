@@ -1,12 +1,9 @@
-import dimensions, { updateLayers } from "../../local-state/dimensions";
 import ViperCanvas from "./ViperCanvas";
 
 import { createSimpleEmitter } from "@solid-primitives/event-bus";
-import state from "../../state";
 import _ from "lodash";
-import { generateAllInstructions } from "../../workers/workers";
 
-export default function Main() {
+export default function Main({ $chart }) {
   const [listen, emit] = createSimpleEmitter();
 
   const throttleSetVisibleRange = _.throttle(calculateNewVisibleRange, 16);
@@ -22,7 +19,7 @@ export default function Main() {
 
   function onDragToResize({ movementX, movementY, layerY }) {
     if (!layerToMove) {
-      layerToMove = state.chart.getLayerByYCoord(layerY);
+      layerToMove = $chart.getLayerByYCoord(layerY);
     }
 
     change.x += movementX;
@@ -35,35 +32,35 @@ export default function Main() {
     e.preventDefault();
     let { deltaX, deltaY, offsetX, offsetY } = e;
 
-    const width = dimensions.main.width.get();
+    const width = $chart.dimensions.main.width.get();
 
     // If horizontal scroll, move range
     if (deltaX !== 0) {
-      const ppe = state.pixelsPerElement.get();
-      const timeframe = state.timeframe.get();
+      const ppe = $chart.pixelsPerElement.get();
+      const timeframe = $chart.timeframe.get();
 
       const d = deltaX;
       const change =
         (d > 0 ? d * 100 : -d * -100) * (width / ppe) * (timeframe / 60000);
 
-      let { start, end } = state.ranges.x.get();
+      let { start, end } = $chart.ranges.x.get();
       start += change;
       end += change;
 
-      state.chart.setVisibleRange({ start, end });
+      $chart.setVisibleRange({ start, end });
     }
 
     // If vertical scroll
     else if (deltaY !== 0) {
-      const layerId = state.chart.getLayerByYCoord(offsetY);
-      const layer = state.ranges.y.get()[layerId].get();
-      let { start, end } = state.ranges.x.get();
+      const layerId = $chart.getLayerByYCoord(offsetY);
+      const layer = $chart.ranges.y.get()[layerId].get();
+      let { start, end } = $chart.ranges.x.get();
       let { min, max } = layer.range;
 
       // If zoom on Y axis
       if (e.ctrlKey || e.shiftKey) {
         layer.lockedYScale = false;
-        const { top, height } = dimensions.main.layers.get()[layerId];
+        const { top, height } = $chart.dimensions.main.layers.get()[layerId];
 
         const topP = (offsetY - top) / height;
         const bottomP = 1 - topP;
@@ -97,32 +94,32 @@ export default function Main() {
         }
       }
 
-      state.chart.setVisibleRange({ start, end, min, max }, layerId);
+      $chart.setVisibleRange({ start, end, min, max }, layerId);
     }
   }
 
   function onDoubleClick({ clientY }) {
-    const layerId = state.chart.getLayerByYCoord(clientY);
-    const layer = state.ranges.y.get()[layerId];
+    const layerId = $chart.getLayerByYCoord(clientY);
+    const layer = $chart.ranges.y.get()[layerId];
     layer.set(v => ({ ...v, fullscreen: !v.fullscreen }));
     updateLayers();
-    generateAllInstructions();
+    $chart.workers.generateAllInstructions();
   }
 
   function calculateNewVisibleRange() {
     const { x, y } = change;
     change = { x: 0, y: 0 };
 
-    const layers = dimensions.main.layers.get();
+    const layers = $chart.dimensions.main.layers.get();
 
-    let { start, end } = state.ranges.x.get();
-    const layer = state.ranges.y.get()[layerToMove].get();
+    let { start, end } = $chart.ranges.x.get();
+    const layer = $chart.ranges.y.get()[layerToMove].get();
     if (!layer) return;
     let { min, max } = layer.range;
 
     // Get how many candles moved
-    const candlesMoved = x / state.pixelsPerElement.get();
-    const timeMoved = state.timeframe.get() * candlesMoved;
+    const candlesMoved = x / $chart.pixelsPerElement.get();
+    const timeMoved = $chart.timeframe.get() * candlesMoved;
 
     start -= timeMoved;
     end -= timeMoved;
@@ -134,7 +131,7 @@ export default function Main() {
       max += priceMoved;
     }
 
-    state.chart.setVisibleRange({ start, end, min, max }, layerToMove);
+    $chart.setVisibleRange({ start, end, min, max }, layerToMove);
   }
 
   return (
@@ -143,11 +140,16 @@ export default function Main() {
       style={{
         left: 0,
         top: 0,
-        width: `${dimensions.main.width.get()}px`,
-        height: `${dimensions.main.height.get()}px`,
+        width: `${$chart.dimensions.main.width.get()}px`,
+        height: `${$chart.dimensions.main.height.get()}px`,
       }}
     >
-      <ViperCanvas emit={emit} {...dimensions.main} type="main" />
+      <ViperCanvas
+        emit={emit}
+        {...$chart.dimensions.main}
+        $chart={$chart}
+        type="main"
+      />
     </div>
   );
 }

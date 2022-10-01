@@ -2,6 +2,7 @@ import { Show } from "solid-js";
 import { actions } from "../../stores/ui";
 import Action from "./Action";
 import { createPane, gridEdit } from "../../stores/panes";
+import Chart from "../../pane/chart";
 
 export default function Navbar() {
   return (
@@ -10,7 +11,7 @@ export default function Navbar() {
         {Action({
           type: "link",
           link: "https://vipercharts.com",
-          imageUrl: "/assets/images/logos/viper-xs.webp",
+          imageUrl: "/images/logos/viper-xs.webp",
         })}
       </div>
 
@@ -36,7 +37,7 @@ export default function Navbar() {
           onClick: () => gridEdit.set(!gridEdit.get()),
           text: gridEdit.get() ? "Lock grid" : "Unlock grid",
         })}
-        <button onClick={[createPane]} className="bg-primary h-12 w-12">
+        <button onClick={[createPane, Chart]} className="bg-primary h-12 w-12">
           <i class="ri-add-line text-xl"></i>
         </button>
       </div>
