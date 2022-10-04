@@ -1,7 +1,10 @@
+import { createSignal } from "solid-js";
 import { onCleanup, onMount } from "solid-js";
 import { Dynamic } from "solid-js/web";
+import global from "../global";
 
 import { modal } from "../stores/ui";
+import { contextmenu } from "../stores/ui/contextmenu";
 
 /**
  *
@@ -77,6 +80,50 @@ export function Modal() {
           <Dynamic component={modal.get().component} />
         </div>
       </div>
+    </div>
+  );
+}
+
+export function ContextMenu() {
+  /** @type {HTMLElement} */
+  let ref;
+
+  let [initial, setInitial] = createSignal(true);
+
+  console.log("Test");
+
+  onMount(() => {
+    const elWidth = ref.clientWidth;
+    const elHeight = ref.clientHeight;
+    const appWidth = global.element.clientWidth;
+    const appHeight = global.element.clientHeight;
+
+    contextmenu.set(v => ({
+      ...v,
+      pos: [
+        Math.min(v.pos[0], appWidth - elWidth),
+        Math.min(v.pos[1], appHeight - elHeight),
+      ],
+    }));
+
+    setInitial(false);
+  });
+
+  const getPos = () => (initial() ? 0 : contextmenu.get().pos);
+
+  return (
+    <div
+      className="absolute min-w-[80px] h-[100px] bg-z-10 border-z-8 border-1 p-2 shadow z-[1000]"
+      classList={{
+        invisible: initial(),
+      }}
+      style={{
+        top: `${getPos()[1]}px`,
+        left: `${getPos()[0]}px`,
+      }}
+      ref={ref}
+    >
+      {contextmenu.get().title}
     </div>
   );
 }

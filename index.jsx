@@ -7,6 +7,7 @@ import "remixicon/fonts/remixicon.css";
 import App from "./src/App";
 import global from "./src/global";
 import ui, { createNewWindow } from "./src/stores/ui";
+import contextmenu from "./src/stores/ui/contextmenu";
 
 export default class Viper {
   /**
@@ -30,6 +31,7 @@ export default class Viper {
   init() {
     keybinds.init();
     ui.init();
+    contextmenu.init();
 
     // Define all keybinds
     // TODO move to separate file
@@ -63,5 +65,6 @@ export default class Viper {
   destory() {
     keybinds.destroy();
     ui.destroy();
+    contextmenu.destroy();
   }
 }

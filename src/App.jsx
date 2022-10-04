@@ -9,11 +9,15 @@ import FloatingWindow from "./components/ui/FloatingWindow";
 import Spotlight from "./components/ui/Spotlight";
 import Navbar from "./components/ui/Navbar";
 import FangSearch from "./components/ui/FangSearch";
-import { Modal } from "./components/components";
+import { ContextMenu, Modal } from "./components/components";
+import { contextmenu, onContextMenu } from "./stores/ui/contextmenu";
 
 export default function App() {
   return (
-    <div className="viper flex flex-col w-full h-full bg-z-10 text-z-1 relative text-sm">
+    <div
+      onContextMenu={onContextMenu}
+      className="viper flex flex-col w-full h-full bg-z-10 text-z-1 relative text-sm"
+    >
       <Navbar />
 
       <section className="grow relative overflow-auto">
@@ -30,6 +34,8 @@ export default function App() {
       <Show when={false} children={<Spotlight />} />
 
       <Show when={modal.get().visible} children={<Modal />} />
+
+      <Show when={contextmenu.get().visible} children={<ContextMenu />} />
     </div>
   );
 }
