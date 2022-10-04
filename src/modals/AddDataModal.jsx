@@ -40,7 +40,7 @@ export default function AddDataModal() {
   function onKeyUp(e) {
     if (e.code === "Enter") {
       if (selected() > -1) {
-        createDataModelGroup(results()[selected()]);
+        createDataModelGroup(selected());
       }
     }
 
@@ -61,7 +61,8 @@ export default function AddDataModal() {
     setSearch(e.target.value);
   }
 
-  function createDataModelGroup({ source, name }) {
+  function createDataModelGroup(index) {
+    const { source, name } = results()[index];
     const plot = activePane().get().app.createDataModelGroup({ source, name });
 
     modal.set({
@@ -78,7 +79,7 @@ export default function AddDataModal() {
     return (
       <div className="w-full p-1" style={props.style}>
         <button
-          onClick={[createDataModelGroup, props.item]}
+          onClick={[createDataModelGroup, props.index]}
           className="text-left text-sm rounded p-2 bg-gray-800 w-full h-full"
           classList={{
             "bg-gray-400": selected() === props.index,
