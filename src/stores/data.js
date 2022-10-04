@@ -26,7 +26,7 @@ class DataState {
     return dataset;
   }
 
-  requestDataPoints(paneId, { source, name, timeframe, modelId, start, end }) {
+  getDataPoints(paneId, { source, name, timeframe, modelId, start, end }) {
     const dataset = this.addOrGetDataset({ source, name, modelId, timeframe });
     const id = dataset.getId();
     const now = Date.now();

@@ -19,6 +19,7 @@
     "@minht11/solid-virtual-container": "^0.2.1",
     "@solid-primitives/event-bus": "^0.1.2",
     "decimal.js": "^10.4.1",
+    "dexie": "^3.2.2",
     "gridstack": "^6.0.2",
     "lodash": "^4.17.21",
     "remixicon": "^2.5.0",

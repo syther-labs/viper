@@ -34,8 +34,8 @@ export function createPane(PaneApp) {
     element,
     config: {},
     $api: {
-      requestData: request => {
-        global.data.requestDataPoints(id, request);
+      getDataPoints(request) {
+        global.data.getDataPoints(id, request);
       },
     },
   });

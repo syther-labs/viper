@@ -158,6 +158,25 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     }
 
     this.workers.generateAllInstructions();
+
+    // Fire request for any missing data
+    for (const setId in this.indicators.get()) {
+      const indicator = this.indicators.get()[setId].get();
+      const plot = indicator.plot.get();
+
+      const { source, name } = plot.dataset;
+
+      console.log(indicator.model);
+
+      this.$api.getDataPoints({
+        source,
+        name,
+        timeframe: this.timeframe.get(),
+        modelId: indicator.model.id,
+        start,
+        end,
+      });
+    }
   },
 
   resizeXRange(change, left = 0.5, right = 0.5) {
@@ -259,7 +278,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     const timeframe = this.timeframe.get();
 
     // Request data from master
-    this.$api.requestData({
+    this.$api.getDataPoints({
       source,
       name,
       timeframe,
