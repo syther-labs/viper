@@ -1,4 +1,3 @@
-/* @refresh reload */
 import { render } from "solid-js/web";
 
 import App from "./App";
@@ -166,7 +165,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
 
       const { source, name } = plot.dataset;
 
-      this.$api.getDataPoints({
+      this.$api.getDataPointsIfNotPresent({
         source,
         name,
         timeframe: this.timeframe.get(),
@@ -272,18 +271,18 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     });
 
     const { source, name } = plot.get().dataset;
-    const { start, end } = this.ranges.x.get();
     const timeframe = this.timeframe.get();
 
     // Request data from master
-    this.$api.getDataPoints({
+    this.$api.getAllDataPoints({
       source,
       name,
       timeframe,
       modelId: model.id,
-      start,
-      end,
     });
+
+    // TODO TEMP fix to load initial data
+    this.setVisibleRange({});
   },
 
   setIndicatorVisibility(renderingQueueId, visible) {

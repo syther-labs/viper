@@ -34,8 +34,16 @@ export function createPane(PaneApp) {
     element,
     config: {},
     $api: {
+      getDataPointsIfNotPresent(request) {
+        const requestedPoint = global.data.hasDataPoints(id, request);
+        if (!requestedPoint) return;
+        global.data.buildRequest(request, requestedPoint);
+      },
       getDataPoints(request) {
         global.data.getDataPoints(id, request);
+      },
+      getAllDataPoints(request) {
+        global.data.getAllDataPoints(id, request);
       },
     },
   });

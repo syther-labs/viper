@@ -26,24 +26,28 @@ class DataState {
     return dataset;
   }
 
-  getDataPoints(paneId, { source, name, timeframe, modelId, start, end }) {
+  /**
+   * Check for missing data
+   * @param {Object} param0
+   * @returns {boolean|Object}
+   */
+  hasDataPoints(paneId, { source, name, timeframe, modelId, start, end }) {
     const dataset = this.addOrGetDataset({ source, name, modelId, timeframe });
-    const id = dataset.getId();
     const now = Date.now();
 
     dataset.subscribe(paneId);
 
-    const requestedPoint = { start: Infinity, end: -Infinity };
-
     // const { maxItemsPerRequest = 300 } =
     //   this.sources[dataset.source][dataset.name];
-
     const maxItemsPerRequest = 500;
 
-    // Get left and right bound times based on batch interval of dataset
     const batchSize = timeframe * maxItemsPerRequest;
+
+    // Get left and right bound times based on batch interval of dataset
     const leftBound = start - (start % batchSize);
     const rightBound = end - (end % batchSize) + batchSize;
+
+    const requestedPoint = { start: Infinity, end: -Infinity };
 
     // Loop through each requested timestamp and check if any are not found
     for (const timestamp of utils.getAllTimestampsIn(
@@ -53,8 +57,6 @@ class DataState {
     )) {
       // Check if greater than now
       if (timestamp > now - (now % timeframe) + timeframe) break;
-
-      const missingData = [];
 
       // Check if in data state
       if (dataset.data[timestamp] !== undefined) continue;
@@ -69,14 +71,60 @@ class DataState {
 
     // If no unloaded data, or start and end time are not valid, don't add request
     if (requestedPoint.start === Infinity || requestedPoint.end === -Infinity) {
-      return;
+      return false;
     }
 
-    requestedPoint.start =
-      Math.floor(requestedPoint.start / batchSize) * batchSize;
-    requestedPoint.end = Math.ceil(requestedPoint.end / batchSize) * batchSize;
+    return requestedPoint;
+  }
 
-    this.allRequestedPoints[id] = requestedPoint;
+  getDataPoints(paneId, { source, name, timeframe, modelId, start, end }) {
+    const dataset = this.addOrGetDataset({ source, name, modelId, timeframe });
+    const id = dataset.getId();
+
+    // Check if data points exist in memory
+    const requestedPoint = this.hasDataPoints(paneId, arguments[1]);
+
+    // If no data to request
+    if (!requestedPoint) {
+      const pane = panes.get()[paneId];
+
+      pane.get().app.on("data", {
+        dataset,
+        timestamps: utils.getAllTimestampsIn(start, end, timeframe),
+      });
+    }
+
+    // If need to request data
+    else {
+      this.buildRequest(arguments[1], requestedPoint);
+    }
+  }
+
+  getAllDataPoints(paneId, { source, name, modelId, timeframe }) {
+    const dataset = this.addOrGetDataset({ source, name, modelId, timeframe });
+    const pane = panes.get()[paneId];
+
+    pane.get().app.on("data", {
+      dataset,
+      timestamps: utils.getAllTimestampsIn(
+        dataset.minTime,
+        dataset.maxTime,
+        timeframe
+      ),
+    });
+  }
+
+  buildRequest({ source, name, timeframe, modelId }, { start, end }) {
+    // const { maxItemsPerRequest = 300 } =
+    //   this.sources[dataset.source][dataset.name];
+    const maxItemsPerRequest = 500;
+    const batchSize = timeframe * maxItemsPerRequest;
+
+    start = Math.floor(start / batchSize) * batchSize;
+    end = Math.ceil(end / batchSize) * batchSize;
+
+    const id = `${source}:${name}:${modelId}:${timeframe}`;
+    this.allRequestedPoints[id] = { start, end };
   }
 
   fireRequest() {
