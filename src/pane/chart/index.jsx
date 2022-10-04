@@ -166,8 +166,6 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
 
       const { source, name } = plot.dataset;
 
-      console.log(indicator.model);
-
       this.$api.getDataPoints({
         source,
         name,
