@@ -23,12 +23,20 @@ button:disabled {
   cursor: not-allowed;
 }
 
+.grid-stack .grid-stack-item {
+  border: 1px solid transparent;
+}
+
 .grid-stack .grid-stack-item-content {
   inset: 0px !important;
 }
 
 .grid-stack .ui-draggable {
   cursor: move;
+}
+
+.grid-stack .active-pane {
+  border: 1px solid green;
 }
 
 .grid-stack .resize-container {

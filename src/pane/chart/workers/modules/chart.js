@@ -13,7 +13,7 @@ const sets = {};
 const computedState = {};
 let instructions = Instructions;
 
-self.addEventListener("message", async (e) => {
+self.addEventListener("message", async e => {
   const { id, method = "", params = {} } = e.data;
 
   postMessage({
@@ -40,27 +40,27 @@ const methods = {
       delete instructions.yScale.plots[renderingQueueId];
       postMessage({
         id: "updateInstructions",
-        data: { instructions }
-      })
+        data: { instructions },
+      });
     }
   },
 
-  calculateOneSet({ renderingQueueId, timestamps, dataset }) {
+  calculateOneSet({ setId, timestamps, dataset }) {
     const { timeframe } = dataset;
 
-    const indicator = queue.get(renderingQueueId);
+    const indicator = queue.get(setId);
     indicator.draw = plot_types.getIndicatorById(indicator.id).draw;
 
     // If indicator is set to not visible, don't calculate data
     if (!indicator.visible) return;
 
-    if (!sets[renderingQueueId]) {
-      sets[renderingQueueId] = createComputedSet({
+    if (!sets[setId]) {
+      sets[setId] = createComputedSet({
         timeframe,
       });
     }
 
-    const set = sets[renderingQueueId];
+    const set = sets[setId];
 
     // Check if set has requires lookback or lookforwardw
     if (set.maxLookback) {
@@ -101,9 +101,7 @@ const methods = {
 
     const addSetItem = (time, type, values) => {
       // If any of the values are not a number, (invalid calculation, ignore them)
-      if (
-        values.series.filter((e) => isNaN(e) || typeof e !== "number").length
-      ) {
+      if (values.series.filter(e => isNaN(e) || typeof e !== "number").length) {
         return;
       }
 
@@ -129,11 +127,11 @@ const methods = {
         }
       }
 
-      sets[renderingQueueId] = set;
+      sets[setId] = set;
     };
 
-    if (!computedState[renderingQueueId]) {
-      computedState[renderingQueueId] = {};
+    if (!computedState[setId]) {
+      computedState[setId] = {};
     }
 
     const funcWraps = {};
@@ -149,7 +147,7 @@ const methods = {
             data: dataset.data,
             dataModel: indicator.model,
             globals,
-            computedState: computedState[renderingQueueId],
+            computedState: computedState[setId],
           },
           ...arguments
         );
@@ -298,7 +296,7 @@ const methods = {
     const instructions = Instructions;
 
     // Get array of x coords for each timestamp on x axis
-    const timestampXCoords = timestamps.map((time) =>
+    const timestampXCoords = timestamps.map(time =>
       utils.getXCoordByTimestamp(start, end, chartDimensions.main.width, time)
     );
 

@@ -1,11 +1,9 @@
 import { For } from "solid-js";
 import { Dynamic } from "solid-js/web";
-import Dataset from "./Dataset";
-import DatasetGroup from "./DatasetGroup";
+import DataModelGroup from "./DataModelGroup";
 
 const PlotComponents = {
-  Dataset,
-  DatasetGroup,
+  DataModelGroup,
 };
 
 export default function Plots({ $chart }) {

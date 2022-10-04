@@ -12,6 +12,12 @@ export const spotlight = {
 export const windows = v({});
 export const activeWindow = v("");
 
+export const modal = v({
+  title: "",
+  visible: false,
+  component: null,
+});
+
 /**
  * Create a new floating, movable window
  * @param {Object} obj

@@ -1,14 +1,17 @@
 import { GridStack } from "gridstack";
 import _, { padEnd, uniqueId } from "lodash";
+import { createMemo } from "solid-js";
 import { createEffect } from "solid-js";
 import { v } from "../api/api";
+import global from "../global";
 import utils from "../pane/chart/utils";
 
 /** @type {GridStack|null} */
 let grid = null;
 
-export const selectedPage = v("");
+export const activePaneId = v({});
 export const panes = v({});
+export const activePane = createMemo(() => panes.get()[activePaneId.get()]);
 export const gridEdit = v(false);
 
 export function createPane(PaneApp) {
@@ -16,9 +19,11 @@ export function createPane(PaneApp) {
 
   const gridItem = grid.addWidget({ w: 6, h: 4 });
   const element = gridItem.querySelector(".grid-stack-item-content");
+  gridItem.addEventListener("click", () => activePaneId.set(id));
 
   const pane = v({
     id,
+    type: "chart",
     gridItem,
     element,
     appType: "chart",
@@ -28,6 +33,11 @@ export function createPane(PaneApp) {
   const app = PaneApp({
     element,
     config: {},
+    $api: {
+      requestData: request => {
+        global.data.requestDataPoints(id, request);
+      },
+    },
   });
   if (typeof app.on !== "function") app.on = () => {};
 
@@ -42,6 +52,9 @@ export function createPane(PaneApp) {
   updatePanePositions([gridItem]);
 
   app.on("mounted");
+
+  // Set active pane to newly created pane
+  activePaneId.set(pane.get().id);
 
   return pane;
 }
@@ -104,6 +117,20 @@ createEffect(() => {
   } else {
     for (const div of document.querySelectorAll(".resize-container")) {
       div.remove();
+    }
+  }
+});
+
+createEffect(() => {
+  const activeId = activePaneId.get();
+
+  for (const pane of Object.values(panes.get())) {
+    // Remove class from pane
+    const { id, gridItem } = pane.get();
+    gridItem.classList.remove("active-pane");
+
+    if (id === activeId) {
+      gridItem.classList.add("active-pane");
     }
   }
 });

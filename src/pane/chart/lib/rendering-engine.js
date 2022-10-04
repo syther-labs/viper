@@ -83,7 +83,10 @@ export default class RenderingEngine {
         // Draw realtime countdown to next timeframe
         if (!isShowingCountdown) {
           const timeLeftY = box.y + box.h;
-          const timeLeft = Utils.formatTimeLeft(now, $chart.timeframe.get());
+          const timeLeft = Utils.formatTimeLeft(
+            now,
+            this.$chart.timeframe.get()
+          );
           this.canvas.drawBox(box.color, [box.x, timeLeftY, box.w, box.h]);
           this.canvas.drawText(
             text.color,

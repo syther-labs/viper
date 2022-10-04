@@ -4,10 +4,10 @@ import ItemWithControls from "./ItemWithControls";
 
 export default function DatasetGroup(props) {
   const { $chart, index } = props;
-  const dataset = $chart.plots.get()[index];
+  const dataModelGroup = $chart.plots.get()[index];
 
   function onToggleVisible() {
-    const { visible } = dataset.get();
+    const { visible } = dataModelGroup.get();
     $chart.setDatasetVisibility(index, !visible);
   }
 
@@ -17,22 +17,28 @@ export default function DatasetGroup(props) {
     $chart.plots.set([...plots]);
   }
 
+  const datasetName = () => {
+    const { source, name } = dataModelGroup.get().dataset;
+    return `${source}:${name}`;
+  };
+
   return (
     <ItemWithControls
-      visible={dataset.get().visible}
+      visible={dataModelGroup.get().visible}
       onToggleVisible={onToggleVisible}
       onRemove={onRemove}
       slot={
         <div className="text-xs p-1">
-          <div className="font-bold">{dataset.get().values.datasetName}</div>
+          <div className="font-bold">{datasetName()}</div>
           <ul className="text-[0.66rem]">
-            <For each={dataset.get().values.indicatorIds}>
+            <For each={dataModelGroup.get().indicatorIds}>
               {indicatorId => (
                 <li className="ml-2 my-1">
                   <div className="grow">
                     <Indicator
                       type="indicator"
-                      dataset={dataset}
+                      $chart={$chart}
+                      dataset={dataModelGroup}
                       indicatorId={indicatorId}
                     />
                   </div>

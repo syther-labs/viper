@@ -6,6 +6,10 @@
  * @property {function} method Method to run when
  */
 
+import AddDataModal from "../modals/AddDataModal";
+import { activePane } from "./panes";
+import { modal } from "./ui";
+
 /** @type {string[]} */
 let keyCombo = [];
 
@@ -18,6 +22,7 @@ const keybinds = {};
  */
 function onKeyDown(e) {
   // If not already in an input
+  if (e.target.nodeName === "INPUT") return;
 
   if (!keyCombo.includes(e.code)) {
     keyCombo.push(e.code);
@@ -29,11 +34,24 @@ function onKeyDown(e) {
  * @param {KeyboardEvent} e
  */
 function onKeyUp(e) {
+  if (e.target.nodeName === "INPUT") return;
+
   const id = keyCombo.join("+");
   const keybind = keybinds[id];
 
-  // If spotlight search
-  if (id.match(/^(Key)([A-Z])$/)) {
+  // If typeing single key
+  const generalKey = id.match(/^(Key)([A-Z])$/);
+  if (generalKey) {
+    if (activePane()?.get().type !== "chart") return;
+
+    modal.set({
+      title: "Add data",
+      visible: true,
+      component: AddDataModal,
+      data: {
+        search: generalKey[2],
+      },
+    });
   }
 
   // Reset the key combo

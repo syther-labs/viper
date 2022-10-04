@@ -18,7 +18,7 @@ import workers from "./workers/workers.js";
  * @param {number} param0.timeframe Initial value for viewing timeframe (defaults to 3.6e6)
  * @param {Object} param0.$api The API for communicating with parent
  */
-export default ({ element, timeframe = 3.6e6, config = {}, $api = {} }) => ({
+export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
   // Parent stuff
   element,
   $api,
@@ -57,6 +57,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api = {} }) => ({
    * @param {*} data
    */
   on(event, data) {
+    // On mounted to HTML
     if (event === "mounted") {
       this.dimensions = dimensions({ $chart: this });
       this.workers = workers({ $chart: this });
@@ -75,13 +76,43 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api = {} }) => ({
       this.setInitialVisibleRange();
 
       render(() => <App $chart={this} />, this.element);
-    } else if (event === "resize") {
+    }
+
+    // On master fire resize
+    else if (event === "resize") {
       this.dimensions.setDimensions(
         this.element.clientWidth,
         this.element.clientHeight
       );
 
       this.setVisibleRange({});
+    }
+
+    // On dataset update
+    else if (event === "data") {
+      const { dataset, timestamps } = data;
+      const { source, name, timeframe } = dataset;
+
+      if (timeframe !== this.timeframe.get()) return;
+
+      /**
+       * Loop through all indicators subscribed to set and check for any
+       * that are subscribed to this dataset
+       */
+      for (const setId in this.indicators.get()) {
+        const indicator = this.indicators.get()[setId].get();
+
+        const plot = indicator.plot.get();
+
+        if (plot.dataset.source === source && plot.dataset.name === name) {
+          // Calcualte new data
+          this.workers.calculateOneSet({
+            setId,
+            timestamps,
+            dataset,
+          });
+        }
+      }
     }
   },
 
@@ -152,19 +183,20 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api = {} }) => ({
     this.setVisibleRange({ start, end });
   },
 
-  createDatasetGroup({ source, name }) {
-    const dataset = v({
-      type: "Dataset",
+  createDataModelGroup({ source, name }) {
+    const plot = v({
+      type: "DataModelGroup",
       visible: true,
-      values: {
-        datasetName: `${source}:${name}`,
-        indicatorIds: [],
+      dataset: {
+        source,
+        name,
       },
+      indicatorIds: [],
     });
 
-    this.plots.set([...this.plots.get(), dataset]);
+    this.plots.set([...this.plots.get(), plot]);
 
-    return dataset;
+    return plot;
   },
 
   setDatasetVisibility(index, visible) {
@@ -172,7 +204,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api = {} }) => ({
     const dataset = this.plots.get()[index];
 
     // Loop through all indicators and set their visibility
-    for (const indicatorId of dataset.get().values.indicatorIds) {
+    for (const indicatorId of dataset.get().indicatorIds) {
       this.setIndicatorVisibility(indicatorId, visible);
     }
 
@@ -182,7 +214,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api = {} }) => ({
 
   async addIndicator(
     indicator,
-    dataset,
+    plot,
     model,
     { visible = true, layerId = Object.keys(this.ranges.y.get())[0] }
   ) {
@@ -195,55 +227,45 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api = {} }) => ({
     indicator = {
       ...indicator,
       color,
-      dataset,
+      plot,
       model,
       visible,
       layerId,
     };
 
-    const { renderingQueueId } = await this.workers.addToQueue({ indicator });
+    const { renderingQueueId: setId } = await this.workers.addToQueue({
+      indicator,
+    });
 
-    indicator.renderingQueueId = renderingQueueId;
+    indicator.setId = setId;
+    indicator.renderingQueueId = setId;
 
     // Create the indicator to be added to state
     indicator = v(indicator);
 
     this.indicators.set(v => ({
       ...v,
-      [renderingQueueId]: indicator,
+      [setId]: indicator,
     }));
 
     // Add a reference to the indicator in the dataset group indicators array
-    dataset.set(v => {
-      v.values.indicatorIds = [...v.values.indicatorIds, renderingQueueId];
+    plot.set(v => {
+      v.indicatorIds = [...v.indicatorIds, setId];
       return { ...v };
     });
 
-    const { datasetName } = dataset.get().values;
-    const [source, name] = datasetName.split(":");
+    const { source, name } = plot.get().dataset;
     const { start, end } = this.ranges.x.get();
     const timeframe = this.timeframe.get();
 
     // Request data from master
-    const data = await this.$api.requestData({
+    this.$api.requestData({
       source,
       name,
       timeframe,
       modelId: model.id,
       start,
       end,
-    });
-
-    // Calcualte new data
-    this.workers.calculateOneSet({
-      renderingQueueId,
-      timestamps: Object.keys(data),
-      dataset: {
-        source,
-        name,
-        timeframe,
-        data,
-      },
     });
   },
 
@@ -288,8 +310,8 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api = {} }) => ({
     const { id, dataset } = indicator.get();
 
     // Delete indicator reference from dataset
-    const i = dataset.get().values.indicatorIds.indexOf(id);
-    dataset.get().values.indicatorIds.splice(i, 1);
+    const i = dataset.get().indicatorIds.indexOf(id);
+    dataset.get().indicatorIds.splice(i, 1);
     dataset.set(v => ({ ...v }));
 
     // Delete from indicators store

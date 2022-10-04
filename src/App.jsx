@@ -1,5 +1,5 @@
 import { For } from "solid-js";
-import { actions, windows } from "./stores/ui";
+import { actions, modal, windows } from "./stores/ui";
 
 import "gridstack/dist/gridstack.min.css";
 
@@ -9,6 +9,7 @@ import FloatingWindow from "./components/ui/FloatingWindow";
 import Spotlight from "./components/ui/Spotlight";
 import Navbar from "./components/ui/Navbar";
 import FangSearch from "./components/ui/FangSearch";
+import { Modal } from "./components/components";
 
 export default function App() {
   return (
@@ -27,6 +28,8 @@ export default function App() {
       {/* <FangSearch /> */}
 
       <Show when={false} children={<Spotlight />} />
+
+      <Show when={modal.get().visible} children={<Modal />} />
     </div>
   );
 }

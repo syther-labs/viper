@@ -368,7 +368,7 @@ for (const type in types) {
 
 export default {
   ...types,
-  getIndicatorById: (id) => {
+  getIndicatorById: id => {
     for (const type in types) {
       for (const indicatorId in types[type]) {
         if (indicatorId === id) return types[type][indicatorId];

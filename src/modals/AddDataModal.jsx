@@ -6,27 +6,27 @@ import {
   onCleanup,
   onMount,
 } from "solid-js";
-import state, { getters } from "../../../../packages/pane/chart/src/state";
-import { v } from "../../../../packages/api";
 
+import { v } from "../api/api";
 import { VirtualContainer } from "@minht11/solid-virtual-container";
 import AddIndicatorModal from "./AddIndicatorModal";
+import global from "../global";
+
+import { modal } from "../stores/ui";
+import { activePane } from "../stores/panes";
 
 export default function AddDataModal() {
   let scrollTarget;
   let input;
 
-  const [search, setSearch] = createSignal(
-    state.ui.modal.get().data.search || ""
-  );
+  const sourcesArr = getSourcesArr();
+
+  const [search, setSearch] = createSignal(modal.get().data.search || "");
   const [selected, setSelected] = createSignal(-1);
 
   const results = createMemo(() => {
-    const regex = new RegExp(search().replace(/[\W_]+/g, "."), "ig");
-
-    return getters.datasetsArray().filter(({ source, name }) => {
-      return regex.test(`${source}:${name}`);
-    });
+    const r = new RegExp(search().replace(/[\W_]+/g, "."), "ig");
+    return sourcesArr.filter(({ source, name }) => r.test(`${source}:${name}`));
   });
 
   onMount(() => {
@@ -40,15 +40,15 @@ export default function AddDataModal() {
   function onKeyUp(e) {
     if (e.code === "Enter") {
       if (selected() > -1) {
-        createDataset(results()[selected()]);
+        createDataModelGroup(results()[selected()]);
       }
     }
 
     if (["ArrowUp", "ArrowDown"].includes(e.code)) {
       if (e.code === "ArrowUp") {
-        setSelected((v) => Math.max(v - 1, 0));
+        setSelected(v => Math.max(v - 1, 0));
       } else if (e.code === "ArrowDown") {
-        setSelected((v) => Math.min(v + 1, results().length - 1));
+        setSelected(v => Math.min(v + 1, results().length - 1));
       }
 
       const item = results()[selected()];
@@ -61,24 +61,15 @@ export default function AddDataModal() {
     setSearch(e.target.value);
   }
 
-  function createDataset({ source, name }) {
-    const dataset = v({
-      type: "Dataset",
-      visible: true,
-      values: {
-        datasetName: `${source}:${name}`,
-        indicatorIds: [],
-      },
-    });
+  function createDataModelGroup({ source, name }) {
+    const plot = activePane().get().app.createDataModelGroup({ source, name });
 
-    state.plots.set([...state.plots.get(), dataset]);
-
-    state.ui.modal.set({
+    modal.set({
       visible: true,
       title: "Add Indicator",
       component: AddIndicatorModal,
       data: {
-        dataset,
+        plot,
       },
     });
   }
@@ -87,7 +78,7 @@ export default function AddDataModal() {
     return (
       <div className="w-full p-1" style={props.style}>
         <button
-          onClick={[createDataset, props.item]}
+          onClick={[createDataModelGroup, props.item]}
           className="text-left text-sm rounded p-2 bg-gray-800 w-full h-full"
           classList={{
             "bg-gray-400": selected() === props.index,
@@ -99,9 +90,7 @@ export default function AddDataModal() {
           </div>
           <div className="opacity-50 italic">
             <Index each={props.item.modelIds}>
-              {(modelId) => (
-                <span>{state.config.dataModels.get()[modelId()].name}</span>
-              )}
+              {modelId => <span>{global.dataModels[modelId()].name}</span>}
             </Index>
           </div>
         </button>
@@ -130,4 +119,16 @@ export default function AddDataModal() {
       </div>
     </div>
   );
+}
+
+function getSourcesArr() {
+  const arr = [];
+
+  for (const source in global.sources) {
+    for (const name in global.sources[source]) {
+      arr.push(global.sources[source][name]);
+    }
+  }
+
+  return arr;
 }

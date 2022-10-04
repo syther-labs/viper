@@ -10,12 +10,17 @@ import ui, { createNewWindow } from "./src/stores/ui";
 
 export default class Viper {
   /**
-   *
+   * Initialize new Viper class
    * @param {Object} param0
    * @param {HTMLElement} param0.element
+   * @param {Object} param0.dataModels
+   * @param {Object} param0.sources
    */
-  constructor({ element }) {
+  constructor({ element, dataModels, sources, requestData }) {
     global.element = element;
+    global.dataModels = dataModels;
+    global.sources = sources;
+    global.requestData = requestData;
 
     render(() => <App />, element);
 

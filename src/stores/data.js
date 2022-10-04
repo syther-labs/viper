@@ -1,53 +1,44 @@
-import Utils from "../../utils";
-export default class DataState extends EventEmitter {
-  constructor({ $global }) {
-    super();
+import utils from "../pane/chart/utils";
 
-    this.$global = $global;
+import global from "../global";
+import { panes } from "./panes";
+
+class DataState {
+  constructor() {
     this.datasets = {};
-    this.sources = {};
 
     this.allRequestedPoints = {};
     this.requestInterval = setInterval(this.fireRequest.bind(this), 250);
   }
 
-  init() {}
-
-  setAllDataSources(sources) {
-    this.sources = sources;
-    this.fire("set-all-data-sources", this.sources);
-  }
-
-  getDataSource(source, name) {
-    return this.sources[source][name];
-  }
-
-  addOrGetDataset({ source, name, timeframe, data = {} }) {
+  addOrGetDataset({ source, name, modelId, timeframe, data = {} }) {
     let dataset;
-    const datasetId = `${source}:${name}:${timeframe}`;
+    const datasetId = `${source}:${name}:${modelId}:${timeframe}`;
 
     // If dataset does not exist, fetch and create
     if (!this.datasets[datasetId]) {
-      dataset = new Dataset(this.$global, source, name, timeframe, data);
+      dataset = new Dataset(source, name, modelId, timeframe, data);
       this.datasets[datasetId] = dataset;
     } else {
       dataset = this.datasets[datasetId];
     }
 
-    this.fire("add-dataset", dataset);
     return dataset;
   }
 
-  requestDataPoints({ dataset, start, end }) {
-    const { timeframe } = dataset;
+  requestDataPoints(paneId, { source, name, timeframe, modelId, start, end }) {
+    const dataset = this.addOrGetDataset({ source, name, modelId, timeframe });
     const id = dataset.getId();
     const now = Date.now();
 
-    const requestedPoint = [Infinity, -Infinity, new Set()];
-    const dependencies = Array.from(dataset.dependencies.keys());
+    dataset.subscribe(paneId);
 
-    const { maxItemsPerRequest = 300 } =
-      this.sources[dataset.source][dataset.name];
+    const requestedPoint = { start: Infinity, end: -Infinity };
+
+    // const { maxItemsPerRequest = 300 } =
+    //   this.sources[dataset.source][dataset.name];
+
+    const maxItemsPerRequest = 500;
 
     // Get left and right bound times based on batch interval of dataset
     const batchSize = timeframe * maxItemsPerRequest;
@@ -55,7 +46,7 @@ export default class DataState extends EventEmitter {
     const rightBound = end - (end % batchSize) + batchSize;
 
     // Loop through each requested timestamp and check if any are not found
-    for (const timestamp of Utils.getAllTimestampsIn(
+    for (const timestamp of utils.getAllTimestampsIn(
       leftBound,
       rightBound,
       timeframe
@@ -66,38 +57,24 @@ export default class DataState extends EventEmitter {
       const missingData = [];
 
       // Check if in data state
-      if (dataset.data[timestamp] === undefined) {
-        missingData = dependencies;
-      } else {
-        // Check all models for missing data
-        for (const d of dependencies) {
-          if (dataset.data[timestamp][d] === undefined) {
-            missingData.push(d);
-          }
-        }
-      }
+      if (dataset.data[timestamp] !== undefined) continue;
 
-      if (!missingData.length) continue;
-
-      // Add to state
-      missingData.forEach((m) => requestedPoint[2].add(m));
-      if (timestamp < requestedPoint[0]) {
-        requestedPoint[0] = timestamp;
+      if (timestamp < requestedPoint.start) {
+        requestedPoint.start = timestamp;
       }
-      if (timestamp > requestedPoint[1]) {
-        requestedPoint[1] = timestamp;
+      if (timestamp > requestedPoint.end) {
+        requestedPoint.end = timestamp;
       }
     }
 
     // If no unloaded data, or start and end time are not valid, don't add request
-    if (requestedPoint[0] === Infinity || requestedPoint[1] === -Infinity) {
+    if (requestedPoint.start === Infinity || requestedPoint.end === -Infinity) {
       return;
     }
 
-    requestedPoint[2] = Array.from(requestedPoint[2].keys());
-
-    requestedPoint[0] = Math.floor(requestedPoint[0] / batchSize) * batchSize;
-    requestedPoint[1] = Math.ceil(requestedPoint[1] / batchSize) * batchSize;
+    requestedPoint.start =
+      Math.floor(requestedPoint.start / batchSize) * batchSize;
+    requestedPoint.end = Math.ceil(requestedPoint.end / batchSize) * batchSize;
 
     this.allRequestedPoints[id] = requestedPoint;
   }
@@ -114,29 +91,27 @@ export default class DataState extends EventEmitter {
 
     // Loop through all requested timestamps and mark their dataset data points as fetched
     for (const id of datasetIds) {
-      const [start, end, dataModels] = allRequestedPoints[id];
+      const { start, end } = allRequestedPoints[id];
       const dataset = this.datasets[id];
       const { timeframe } = dataset;
 
       // This is so data does not get requested again
-      for (const timestamp of Utils.getAllTimestampsIn(start, end, timeframe)) {
+      for (const timestamp of utils.getAllTimestampsIn(start, end, timeframe)) {
         if (!dataset.data[timestamp]) {
-          dataset.data[timestamp] = {};
-        }
-
-        for (const dataModel of dataModels) {
-          dataset.data[timestamp][dataModel] = null;
+          dataset.data[timestamp] = null;
         }
       }
     }
 
     // Build array with requested sources, names, timeframes, and start & end times
     let requests = [];
+
     for (const id of datasetIds) {
-      let [start, end, dataModels] = allRequestedPoints[id];
+      let { start, end } = allRequestedPoints[id];
       const dataset = this.datasets[id];
-      const { source, name, timeframe } = dataset;
-      const { maxItemsPerRequest = 300 } = this.sources[source][name];
+      const { source, name, modelId, timeframe } = dataset;
+      // const { maxItemsPerRequest = 300 } = this.sources[source][name];
+      const maxItemsPerRequest = 500;
 
       // Loop from end to start timeframe on timeframe * itemsPerRequest || 3000 to batch requests if multiple needed
       let i =
@@ -145,8 +120,6 @@ export default class DataState extends EventEmitter {
       for (; i > 0; i--) {
         const leftBound = i <= 1 ? start : end - timeframe * maxItemsPerRequest;
 
-        dataModels.forEach((m) => dataset.pendingRequests[m]++);
-
         // If start and end are the same, ignore
         if (leftBound === end) continue;
 
@@ -154,7 +127,7 @@ export default class DataState extends EventEmitter {
           id,
           source,
           name,
-          dataModels,
+          modelId,
           timeframe,
           start: leftBound,
           end,
@@ -162,15 +135,100 @@ export default class DataState extends EventEmitter {
 
         end -= timeframe * maxItemsPerRequest;
       }
-
-      dataset.fire("pending-requests", dataset.pendingRequests);
     }
 
     // Sort by latest timestamps
     requests = requests.sort((a, b) => b.end - a.end);
 
-    this.$global.api.onRequestHistoricalData({
-      requests,
-    });
+    for (const request of requests) {
+      const { source, name, modelId, timeframe } = request;
+      const datasetId = `${source}:${name}:${modelId}:${timeframe}`;
+      const dataset = this.datasets[datasetId];
+
+      (async () => {
+        const data = await global.requestData(request);
+        dataset.updateDataset(data);
+      })();
+    }
   }
 }
+
+class Dataset {
+  constructor(source, name, modelId, timeframe, data) {
+    this.source = source;
+    this.name = name;
+    this.modelId = modelId;
+    this.timeframe = timeframe;
+    this.data = data;
+    this.subscribers = new Set();
+    this.minTime = Infinity;
+    this.maxTime = -Infinity;
+  }
+
+  getId() {
+    return `${this.source}:${this.name}:${this.modelId}:${this.timeframe}`;
+  }
+
+  getTimeframeAgnosticId() {
+    return `${this.source}:${this.name}:${this.modelId}`;
+  }
+
+  /**
+   * Update the data and call all subscribers that updates were applied
+   * @param {Object.<number,Object>} updates Object[time]{ ...values }
+   */
+  updateDataset(updates) {
+    let timestamps = new Set();
+
+    // Apply updates
+    for (const key in updates) {
+      let time = +key;
+
+      timestamps.add(time);
+
+      if (time < this.minTime) {
+        this.minTime = time;
+      }
+      if (time > this.maxTime) {
+        this.maxTime = time;
+      }
+
+      if (!this.data[time]) {
+        this.data[time] = updates[key];
+        continue;
+      }
+
+      this.data[time] = updates[key];
+    }
+
+    timestamps = Array.from(timestamps.keys()).sort((a, b) => a - b);
+
+    // Hand data to all listeners
+    for (const paneId of Array.from(this.subscribers.keys())) {
+      const pane = panes.get()[paneId];
+
+      pane.get().app.on("data", {
+        dataset: {
+          source: this.source,
+          name: this.name,
+          timeframe: this.timeframe,
+          data: this.data,
+        },
+        timestamps,
+      });
+    }
+  }
+
+  subscribe(paneId) {
+    this.subscribers.add(paneId);
+  }
+
+  unsubscribe(paneId) {
+    this.subscribers.delete(paneId);
+
+    // If no more subscribers, delete from memory
+    delete global.data.datasets[this.getId()];
+  }
+}
+
+export default new DataState();

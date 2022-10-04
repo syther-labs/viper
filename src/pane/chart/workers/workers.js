@@ -62,7 +62,7 @@ export default ({ $chart }) => ({
     return { renderingQueueId };
   },
 
-  async setIndicatorVisibility({ renderingQueueId, visible }) {
+  async setIndicatorVisibility({ setId, visible }) {
     await new Promise(resolve => {
       const id = this.addToResolveQueue(resolve);
 
@@ -70,7 +70,7 @@ export default ({ $chart }) => ({
         j({
           id,
           method: "setIndicatorVisibility",
-          params: { renderingQueueId, visible },
+          params: { setId, visible },
         })
       );
     });
@@ -78,7 +78,7 @@ export default ({ $chart }) => ({
     await this.generateAllInstructions();
   },
 
-  async calculateOneSet({ renderingQueueId, timestamps, dataset }) {
+  async calculateOneSet({ setId, timestamps, dataset }) {
     await new Promise(resolve => {
       const id = this.addToResolveQueue(resolve);
 
@@ -87,7 +87,7 @@ export default ({ $chart }) => ({
           id,
           method: "calculateOneSet",
           params: {
-            renderingQueueId,
+            setId,
             timestamps,
             dataset,
           },
