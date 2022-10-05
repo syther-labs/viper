@@ -19,8 +19,9 @@
   background: #555;
 }
 
-button:disabled {
+.viper button:disabled {
   cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .grid-stack .grid-stack-item {

@@ -102,7 +102,7 @@ export default function Main({ $chart }) {
     const layerId = $chart.getLayerByYCoord(clientY);
     const layer = $chart.ranges.y.get()[layerId];
     layer.set(v => ({ ...v, fullscreen: !v.fullscreen }));
-    updateLayers();
+    $chart.dimensions.updateLayers();
     $chart.workers.generateAllInstructions();
   }
 
@@ -143,6 +143,7 @@ export default function Main({ $chart }) {
         width: `${$chart.dimensions.main.width.get()}px`,
         height: `${$chart.dimensions.main.height.get()}px`,
       }}
+      context-menu-id="main"
     >
       <ViperCanvas
         emit={emit}

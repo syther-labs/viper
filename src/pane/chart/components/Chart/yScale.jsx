@@ -51,6 +51,7 @@ export default function yScale({ $chart }) {
         width: `${$chart.dimensions.yScale.width.get()}px`,
         height: `${$chart.dimensions.yScale.height.get()}px`,
       }}
+      context-menu-id="yScale"
     >
       <ViperCanvas
         emit={emit}

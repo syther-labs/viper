@@ -4,7 +4,7 @@ import { Dynamic } from "solid-js/web";
 import global from "../global";
 
 import { modal } from "../stores/ui";
-import { contextmenu } from "../stores/ui/contextmenu";
+import { contextmenu, hide } from "../stores/ui/contextmenu";
 
 /**
  *
@@ -90,8 +90,6 @@ export function ContextMenu() {
 
   let [initial, setInitial] = createSignal(true);
 
-  console.log("Test");
-
   onMount(() => {
     const elWidth = ref.clientWidth;
     const elHeight = ref.clientHeight;
@@ -113,7 +111,8 @@ export function ContextMenu() {
 
   return (
     <div
-      className="absolute min-w-[80px] h-[100px] bg-z-10 border-z-8 border-1 p-2 shadow z-[1000]"
+      className="absolute bg-z-10 border-z-8 border-1 p-1 shadow z-[1000]"
+      context-menu="true"
       classList={{
         invisible: initial(),
       }}
@@ -123,7 +122,45 @@ export function ContextMenu() {
       }}
       ref={ref}
     >
-      {contextmenu.get().title}
+      <Title title={contextmenu.get().title} />
+      <div>
+        <List children={contextmenu.get().config} />
+      </div>
     </div>
   );
+}
+
+function Title({ title }) {
+  return <div className="text-xxs">{title}</div>;
+}
+
+function List({ children }) {
+  return (
+    <div className="my-2">
+      <For each={children}>
+        {child => (
+          <Switch>
+            <Match when={child.type === "list"}>
+              <Title title={child.title} />
+              <List children={child.children} />
+            </Match>
+            <Match when={child.type === "button"}>
+              <button
+                className="block text-xs bg-z-10 hover:bg-z-9 p-1 text-z-1 w-full text-left"
+                disabled={child.disabled}
+                onClick={[onClick, child.onClick]}
+              >
+                {child.text}
+              </button>
+            </Match>
+          </Switch>
+        )}
+      </For>
+    </div>
+  );
+}
+
+function onClick(onClick) {
+  onClick();
+  hide();
 }

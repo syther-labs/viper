@@ -14,7 +14,7 @@ export const panes = v({});
 export const activePane = createMemo(() => panes.get()[activePaneId.get()]);
 export const gridEdit = v(false);
 
-export function createPane(PaneApp) {
+export function createPane(Pane) {
   const id = uniqueId();
 
   const gridItem = grid.addWidget({ w: 6, h: 4 });
@@ -30,7 +30,7 @@ export function createPane(PaneApp) {
     pos: undefined,
   });
 
-  const app = PaneApp({
+  const app = Pane.app({
     element,
     config: {},
     $api: {
@@ -53,6 +53,8 @@ export function createPane(PaneApp) {
   pane.set(v => ({
     ...v,
     app,
+    actions: Pane.actions,
+    contextmenus: Pane.contextmenus,
   }));
 
   panes.set(v => ({ ...v, [id]: pane }));
