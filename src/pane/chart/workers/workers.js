@@ -117,7 +117,7 @@ export default ({ $chart }) => ({
     } = await new Promise(resolve => {
       const id = this.addToResolveQueue(resolve);
 
-      const y = { ...$chart.ranges.y.get() };
+      const y = { ...$chart.state.ranges.y.get() };
       for (const id in y) {
         y[id] = y[id].get();
       }
@@ -128,10 +128,10 @@ export default ({ $chart }) => ({
           method: "generateAllInstructions",
           params: {
             requestedRanges: {
-              x: $chart.ranges.x.get(),
+              x: $chart.state.ranges.x.get(),
               y,
             },
-            timeframe: $chart.timeframe.get(),
+            timeframe: $chart.state.timeframe.get(),
             chartDimensions: {
               main: {
                 width: $chart.dimensions.main.width.get(),
@@ -147,18 +147,18 @@ export default ({ $chart }) => ({
                 height: $chart.dimensions.xScale.height.get(),
               },
             },
-            pixelsPerElement: $chart.pixelsPerElement.get(),
+            pixelsPerElement: $chart.state.pixelsPerElement.get(),
           },
         })
       );
     });
 
     this.instructions = newInstructions;
-    $chart.pixelsPerElement.set(pixelsPerElement);
+    $chart.state.pixelsPerElement.set(pixelsPerElement);
     $chart.renderedRanges.x.set(visibleRanges.x);
 
     for (const layerId in visibleRanges.y) {
-      const yRange = $chart.ranges.y.get()[layerId];
+      const yRange = $chart.state.ranges.y.get()[layerId];
       const yRenderedRage = $chart.renderedRanges.y.get()[layerId];
 
       yRange.set(v => ({

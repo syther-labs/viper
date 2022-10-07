@@ -4,7 +4,7 @@ import ItemWithControls from "./ItemWithControls";
 
 export default function DatasetGroup(props) {
   const { $chart, index } = props;
-  const dataModelGroup = $chart.plots.get()[index];
+  const dataModelGroup = $chart.state.plots.get()[index];
 
   function onToggleVisible() {
     const { visible } = dataModelGroup.get();

@@ -85,7 +85,7 @@ export default class RenderingEngine {
           const timeLeftY = box.y + box.h;
           const timeLeft = Utils.formatTimeLeft(
             now,
-            this.$chart.timeframe.get()
+            this.$chart.state.timeframe.get()
           );
           this.canvas.drawBox(box.color, [box.x, timeLeftY, box.w, box.h]);
           this.canvas.drawText(
@@ -285,7 +285,7 @@ export default class RenderingEngine {
       }
 
       // Check if in fullscreen
-      const y = this.$chart.ranges.y.get();
+      const y = this.$chart.state.ranges.y.get();
       const found = Object.values(y)
         .map(y => y.get())
         .find(({ fullscreen }) => fullscreen);

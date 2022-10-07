@@ -17,7 +17,7 @@ export default function AddIndicatorModal() {
   function onAddIndicator(indicator, offChart = false) {
     const { app } = activePane().get();
 
-    const layerId = offChart ? "new" : Object.keys(app.ranges.y.get())[0];
+    const layerId = offChart ? "new" : Object.keys(app.state.ranges.y.get())[0];
     app.addIndicator(indicator, plot, tab.get(), { layerId });
   }
 

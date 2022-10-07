@@ -9,7 +9,7 @@ const PlotComponents = {
 export default function Plots({ $chart }) {
   return (
     <ul className="w-full max-w-[20rem]">
-      <For each={$chart.plots.get()}>
+      <For each={$chart.state.plots.get()}>
         {(plot, index) => (
           <Dynamic
             $chart={$chart}

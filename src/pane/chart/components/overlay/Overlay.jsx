@@ -8,7 +8,7 @@ export default function Overlay({ $chart }) {
       <div className="flex items-center font-bold mb-2">
         <ChartName $chart={$chart} />
         <span className="mx-2">•</span>
-        <div>{getTimeframeText($chart.timeframe.get())}</div>
+        <div>{getTimeframeText($chart.state.timeframe.get())}</div>
       </div>
       <Plots $chart={$chart} />
     </div>

@@ -14,7 +14,7 @@ export default function yScale({ $chart }) {
 
   function onDoubleClick(e) {
     const layerId = $chart.getLayerByYCoord(e.clientY);
-    const layer = $chart.ranges.y.get()[layerId];
+    const layer = $chart.state.ranges.y.get()[layerId];
 
     if (!layer.get().lockedYScale) {
       layer.set(v => ({ ...v, lockedYScale: true }));
@@ -29,14 +29,14 @@ export default function yScale({ $chart }) {
       layerToMove = $chart.getLayerByYCoord(layerY);
     }
 
-    let { min, max } = $chart.ranges.y.get()[layerToMove].get().range;
+    let { min, max } = $chart.state.ranges.y.get()[layerToMove].get().range;
     const delta = max - min;
     const delta10P = delta * 0.01;
     const change = -movementY * delta10P;
     min += change;
     max -= change;
 
-    const layer = $chart.ranges.y.get()[layerToMove];
+    const layer = $chart.state.ranges.y.get()[layerToMove];
     layer.set(v => ({ ...v, lockedYScale: false }));
 
     $chart.setVisibleRange({ min, max }, layerToMove);

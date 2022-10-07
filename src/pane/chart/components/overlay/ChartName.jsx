@@ -11,7 +11,7 @@ export default function ChartName({ $chart }) {
 
     const { value } = event.target;
     isEdit.set(false);
-    $chart.name.set(value);
+    $chart.state.name.set(value);
   }
 
   function onKeyUp(event) {
@@ -21,7 +21,7 @@ export default function ChartName({ $chart }) {
       isEdit.set(false);
     } else if (code === "Enter") {
       isEdit.set(false);
-      $chart.name.set(event.target.value);
+      $chart.state.name.set(event.target.value);
     }
   }
 
@@ -38,13 +38,13 @@ export default function ChartName({ $chart }) {
           onClick={() => isEdit.set(true)}
           className="border-2 border-transparent"
         >
-          {$chart.name.get()}
+          {$chart.state.name.get()}
         </button>
       </Show>
       <Show when={isEdit.get()}>
         <input
           ref={inputRef}
-          value={$chart.name.get()}
+          value={$chart.state.name.get()}
           onBlur={onBlur}
           onKeyUp={onKeyUp}
           className="bg-transparent border-2"

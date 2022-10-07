@@ -4,7 +4,7 @@ import ItemWithControls from "./ItemWithControls";
 export default function Indicator(props) {
   const { $chart, indicatorId, dataset } = props;
 
-  const indicator = $chart.indicators.get()[indicatorId];
+  const indicator = $chart.state.indicators.get()[indicatorId];
 
   function onToggleVisible() {
     const { renderingQueueId, visible } = indicator.get();

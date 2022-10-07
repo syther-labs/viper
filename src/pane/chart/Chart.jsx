@@ -8,7 +8,6 @@ import { v } from "../../api/api";
 
 import dimensions from "./local-state/dimensions";
 import workers from "./workers/workers.js";
-import Instructions from "./local-state/Instructions";
 
 /**
  * Create a new chart
@@ -17,7 +16,13 @@ import Instructions from "./local-state/Instructions";
  * @param {number} param0.timeframe Initial value for viewing timeframe (defaults to 3.6e6)
  * @param {Object} param0.$api The API for communicating with parent
  */
-export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
+export default ({
+  element,
+  timeframe = 3.6e6,
+  state = {},
+  config = {},
+  $api,
+}) => ({
   // Parent stuff
   element,
   $api,
@@ -29,18 +34,26 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     ...config,
   }),
 
-  // Chart state
-  timeframe: v(timeframe),
-  name: v("Untitled chart"),
-  plots: v([]),
-  indicators: v({}),
-  ranges: {
-    x: v({
-      start: undefined,
-      end: undefined,
-    }),
-    y: v({}),
+  // Presistent state
+  state: {
+    ...state,
+    timeframe: v(timeframe),
+    name: v("Untitled chart"),
+    plots: v([]),
+    indicators: v({}),
+
+    ranges: {
+      x: v({
+        start: undefined,
+        end: undefined,
+      }),
+      y: v({}),
+    },
+
+    pixelsPerElement: v(10),
   },
+
+  // Local state
   renderedRanges: {
     x: v({
       start: undefined,
@@ -48,7 +61,6 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     }),
     y: v({}),
   },
-  pixelsPerElement: v(10),
 
   /**
    * On parent emitted events
@@ -68,7 +80,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
       );
 
       // If no ranges, create a default one
-      if (!Object.keys(this.ranges.y.get()).length) {
+      if (!Object.keys(this.state.ranges.y.get()).length) {
         this.addLayer(10);
       }
 
@@ -92,14 +104,14 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
       const { dataset, dataModel, timestamps } = data;
       const { source, name, timeframe } = dataset;
 
-      if (timeframe !== this.timeframe.get()) return;
+      if (timeframe !== this.state.timeframe.get()) return;
 
       /**
        * Loop through all indicators subscribed to set and check for any
        * that are subscribed to this dataset
        */
-      for (const setId in this.indicators.get()) {
-        const indicator = this.indicators.get()[setId].get();
+      for (const setId in this.state.indicators.get()) {
+        const indicator = this.state.indicators.get()[setId].get();
 
         const plot = indicator.plot.get();
 
@@ -117,14 +129,14 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
   },
 
   setInitialVisibleRange() {
-    let { start, end } = this.ranges.x.get();
-    const timeframe = this.timeframe.get();
+    let { start, end } = this.state.ranges.x.get();
+    const timeframe = this.state.timeframe.get();
     const width = this.dimensions.main.width.get();
 
     const endTimestamp = Math.floor(Date.now() / timeframe) * timeframe;
-    this.pixelsPerElement.set(10);
+    this.state.pixelsPerElement.set(10);
 
-    const candlesInView = width / this.pixelsPerElement.get();
+    const candlesInView = width / this.state.pixelsPerElement.get();
     end = endTimestamp + timeframe * 10;
     start = end - candlesInView * timeframe;
 
@@ -133,10 +145,10 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
 
   setVisibleRange(
     newRange = {},
-    layerId = Object.keys(this.ranges.y.get())[0]
+    layerId = Object.keys(this.state.ranges.y.get())[0]
   ) {
-    const xRange = this.ranges.x.get();
-    const yRange = this.ranges.y.get()[layerId].get().range;
+    const xRange = this.state.ranges.x.get();
+    const yRange = this.state.ranges.y.get()[layerId].get().range;
 
     const {
       start = xRange.start,
@@ -147,11 +159,11 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
 
     // If x range changed
     if (start !== xRange.start || end !== xRange.end) {
-      this.ranges.x.set({ start, end });
+      this.state.ranges.x.set({ start, end });
     }
 
     if (min !== yRange.min || max !== yRange.max) {
-      this.ranges.y.get()[layerId].set(v => ({
+      this.state.ranges.y.get()[layerId].set(v => ({
         ...v,
         range: { min, max },
       }));
@@ -160,8 +172,8 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     this.workers.generateAllInstructions();
 
     // Fire request for any missing data
-    for (const setId in this.indicators.get()) {
-      const indicator = this.indicators.get()[setId].get();
+    for (const setId in this.state.indicators.get()) {
+      const indicator = this.state.indicators.get()[setId].get();
       const plot = indicator.plot.get();
 
       const { source, name } = plot.dataset;
@@ -169,7 +181,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
       this.$api.getDataPointsIfNotPresent({
         source,
         name,
-        timeframe: this.timeframe.get(),
+        timeframe: this.state.timeframe.get(),
         modelId: indicator.model,
         start,
         end,
@@ -180,7 +192,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
   resizeXRange(change, left = 0.5, right = 0.5) {
     const width = this.dimensions.main.width.get();
 
-    let { start, end } = this.ranges.x.get();
+    let { start, end } = this.state.ranges.x.get();
     let range = end - start;
 
     if (change < 0) {
@@ -192,7 +204,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     }
 
     // Calcualte new pixels per element based on new range
-    const ppe = width / ((end - start) / this.timeframe.get());
+    const ppe = width / ((end - start) / this.state.timeframe.get());
 
     // If pixels per element is less than 1 or greater than 1000, dont apply changes
     if (ppe < 1 || ppe > 1000) return;
@@ -201,29 +213,29 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
   },
 
   setTimeframe(timeframe) {
-    if (timeframe === this.timeframe.get()) return;
+    if (timeframe === this.state.timeframe.get()) return;
 
     // Clear all sets
     this.workers.emptyAllSets();
 
     // Loop through all plots and unsubscribe from all datasets
-    for (const plot of Object.values(this.plots.get())) {
+    for (const plot of Object.values(this.state.plots.get())) {
       const { dataset, indicatorIds } = plot.get();
 
       for (const indicatorId of indicatorIds) {
-        const { model } = this.indicators.get()[indicatorId].get();
+        const { model } = this.state.indicators.get()[indicatorId].get();
 
         this.$api.unsubscribeFromDataset({
           source: dataset.source,
           name: dataset.name,
           modelId: model,
-          timeframe: this.timeframe.get(),
+          timeframe: this.state.timeframe.get(),
         });
       }
     }
 
     // Set the timeframe
-    this.timeframe.set(timeframe);
+    this.state.timeframe.set(timeframe);
 
     // Reset range
     this.setInitialVisibleRange();
@@ -240,14 +252,14 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
       indicatorIds: [],
     });
 
-    this.plots.set([...this.plots.get(), plot]);
+    this.state.plots.set([...this.state.plots.get(), plot]);
 
     return plot;
   },
 
   setDatasetVisibility(index, visible) {
     // Get the dataset from plot map
-    const dataset = this.plots.get()[index];
+    const dataset = this.state.plots.get()[index];
 
     // Loop through all indicators and set their visibility
     for (const indicatorId of dataset.get().indicatorIds) {
@@ -262,9 +274,9 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     indicator,
     plot,
     model,
-    { visible = true, layerId = Object.keys(this.ranges.y.get())[0] }
+    { visible = true, layerId = Object.keys(this.state.ranges.y.get())[0] }
   ) {
-    if (!layerId || !this.ranges.y.get()[layerId]) {
+    if (!layerId || !this.state.ranges.y.get()[layerId]) {
       layerId = this.addLayer(3);
     }
 
@@ -289,7 +301,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     // Create the indicator to be added to state
     indicator = v(indicator);
 
-    this.indicators.set(v => ({
+    this.state.indicators.set(v => ({
       ...v,
       [setId]: indicator,
     }));
@@ -301,7 +313,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     });
 
     const { source, name } = plot.get().dataset;
-    const timeframe = this.timeframe.get();
+    const timeframe = this.state.timeframe.get();
 
     // Request data from master
     this.$api.getAllDataPoints({
@@ -316,7 +328,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
   },
 
   setIndicatorVisibility(setId, visible) {
-    const indicators = this.indicators.get();
+    const indicators = this.state.indicators.get();
     const indicator = indicators[setId];
 
     indicator.set(v => ({ ...v, visible }));
@@ -327,7 +339,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     });
 
     // Check if any indicators in layer are visible
-    const layer = this.ranges.y.get()[indicator.get().layerId];
+    const layer = this.state.ranges.y.get()[indicator.get().layerId];
     let found = false;
 
     // Loop through all indicators and see if any are using same layerId and visible
@@ -361,7 +373,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     plot.set(v => ({ ...v }));
 
     // Delete from indicators store
-    this.indicators.set(v => {
+    this.state.indicators.set(v => {
       delete v[setId];
       return { ...v };
     });
@@ -371,14 +383,14 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
   },
 
   removePlot(index) {
-    const plots = this.plots.get();
+    const plots = this.state.plots.get();
 
     for (const setId of plots[index].get().indicatorIds) {
-      this.removeIndicator(this.indicators.get()[setId]);
+      this.removeIndicator(this.state.indicators.get()[setId]);
     }
 
     plots.splice(index, 1);
-    this.plots.set([...plots]);
+    this.state.plots.set([...plots]);
   },
 
   addLayer(heightUnit) {
@@ -395,7 +407,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
       range: { min: Infinity, max: -Infinity },
     });
 
-    this.ranges.y.set(v => ({
+    this.state.ranges.y.set(v => ({
       ...v,
       [id]: layer,
     }));

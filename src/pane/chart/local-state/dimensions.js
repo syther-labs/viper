@@ -41,7 +41,7 @@ export default ({ $chart }) => ({
    * Update the computed pixel height and positioning of chart layers
    */
   updateLayers() {
-    const y = $chart.ranges.y.get();
+    const y = $chart.state.ranges.y.get();
 
     const ids = Object.keys(y);
     if (!ids.length) return;

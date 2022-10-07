@@ -36,14 +36,14 @@ export default function Main({ $chart }) {
 
     // If horizontal scroll, move range
     if (deltaX !== 0) {
-      const ppe = $chart.pixelsPerElement.get();
-      const timeframe = $chart.timeframe.get();
+      const ppe = $chart.state.pixelsPerElement.get();
+      const timeframe = $chart.state.timeframe.get();
 
       const d = deltaX;
       const change =
         (d > 0 ? d * 100 : -d * -100) * (width / ppe) * (timeframe / 60000);
 
-      let { start, end } = $chart.ranges.x.get();
+      let { start, end } = $chart.state.ranges.x.get();
       start += change;
       end += change;
 
@@ -53,8 +53,8 @@ export default function Main({ $chart }) {
     // If vertical scroll
     else if (deltaY !== 0) {
       const layerId = $chart.getLayerByYCoord(offsetY);
-      const layer = $chart.ranges.y.get()[layerId].get();
-      let { start, end } = $chart.ranges.x.get();
+      const layer = $chart.state.ranges.y.get()[layerId].get();
+      let { start, end } = $chart.state.ranges.x.get();
       let { min, max } = layer.range;
 
       // If zoom on Y axis
@@ -100,7 +100,7 @@ export default function Main({ $chart }) {
 
   function onDoubleClick({ clientY }) {
     const layerId = $chart.getLayerByYCoord(clientY);
-    const layer = $chart.ranges.y.get()[layerId];
+    const layer = $chart.state.ranges.y.get()[layerId];
     layer.set(v => ({ ...v, fullscreen: !v.fullscreen }));
     $chart.dimensions.updateLayers();
     $chart.workers.generateAllInstructions();
@@ -112,14 +112,14 @@ export default function Main({ $chart }) {
 
     const layers = $chart.dimensions.main.layers.get();
 
-    let { start, end } = $chart.ranges.x.get();
-    const layer = $chart.ranges.y.get()[layerToMove].get();
+    let { start, end } = $chart.state.ranges.x.get();
+    const layer = $chart.state.ranges.y.get()[layerToMove].get();
     if (!layer) return;
     let { min, max } = layer.range;
 
     // Get how many candles moved
-    const candlesMoved = x / $chart.pixelsPerElement.get();
-    const timeMoved = $chart.timeframe.get() * candlesMoved;
+    const candlesMoved = x / $chart.state.pixelsPerElement.get();
+    const timeMoved = $chart.state.timeframe.get() * candlesMoved;
 
     start -= timeMoved;
     end -= timeMoved;
