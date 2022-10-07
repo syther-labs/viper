@@ -6,7 +6,6 @@ import utils from "./utils";
 
 import { v } from "../../api/api";
 
-import API from "../../api/api.js";
 import dimensions from "./local-state/dimensions";
 import workers from "./workers/workers.js";
 
@@ -249,7 +248,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
       layerId,
     };
 
-    const { renderingQueueId: setId } = await this.workers.addToQueue({
+    const { setId } = await this.workers.addToQueue({
       indicator,
     });
 
@@ -285,14 +284,14 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     this.setVisibleRange({});
   },
 
-  setIndicatorVisibility(renderingQueueId, visible) {
+  setIndicatorVisibility(setId, visible) {
     const indicators = this.indicators.get();
-    const indicator = indicators[renderingQueueId];
+    const indicator = indicators[setId];
 
     indicator.set(v => ({ ...v, visible }));
 
     this.workers.setIndicatorVisibility({
-      renderingQueueId,
+      setId,
       visible,
     });
 

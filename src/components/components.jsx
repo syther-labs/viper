@@ -123,7 +123,7 @@ export function ContextMenu() {
       ref={ref}
     >
       <Title title={contextmenu.get().title} />
-      <div>
+      <div className="mt-2">
         <List children={contextmenu.get().config} />
       </div>
     </div>
@@ -136,7 +136,7 @@ function Title({ title }) {
 
 function List({ children }) {
   return (
-    <div className="my-2">
+    <div>
       <For each={children}>
         {child => (
           <Switch>

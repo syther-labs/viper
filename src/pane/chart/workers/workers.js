@@ -39,7 +39,7 @@ export default ({ $chart }) => ({
   },
 
   async addToQueue({ indicator }) {
-    const { renderingQueueId } = await new Promise(resolve => {
+    const { setId } = await new Promise(resolve => {
       const id = this.addToResolveQueue(resolve);
 
       this.workers.chart.postMessage(
@@ -59,7 +59,7 @@ export default ({ $chart }) => ({
     // const { canvas } = this.chart.subcharts.main;
     // canvas.RE.addToRenderingOrder(renderingQueueId);
 
-    return { renderingQueueId };
+    return { setId };
   },
 
   async setIndicatorVisibility({ setId, visible }) {

@@ -24,20 +24,20 @@ self.addEventListener("message", async e => {
 
 const methods = {
   addToQueue({ indicator }) {
-    let renderingQueueId = utils.uniqueId();
-    queue.set(renderingQueueId, indicator);
-    return { renderingQueueId };
+    let setId = utils.uniqueId();
+    queue.set(setId, indicator);
+    return { setId };
   },
 
-  setIndicatorVisibility({ renderingQueueId, visible }) {
-    const indicator = queue.get(renderingQueueId);
+  setIndicatorVisibility({ setId, visible }) {
+    const indicator = queue.get(setId);
     indicator.visible = visible;
-    queue.set(renderingQueueId, indicator);
+    queue.set(setId, indicator);
 
     if (!indicator.visible) {
-      delete instructions.main.values[renderingQueueId];
-      delete instructions.main.plots[renderingQueueId];
-      delete instructions.yScale.plots[renderingQueueId];
+      delete instructions.main.values[setId];
+      delete instructions.main.plots[setId];
+      delete instructions.yScale.plots[setId];
       postMessage({
         id: "updateInstructions",
         data: { instructions },

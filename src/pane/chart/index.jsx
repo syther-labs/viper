@@ -71,6 +71,51 @@ const contextmenus = {
       ],
     };
   },
+
+  yScale: (chart, e) => {
+    const { clientY } = e;
+
+    // Get the layer
+    const layerId = chart.getLayerByYCoord(clientY);
+    const layer = chart.ranges.y.get()[layerId];
+    const { scaleType } = layer.get();
+
+    return {
+      title: chart.name.get(),
+      config: [
+        {
+          type: "list",
+          title: "Set scale type",
+          children: [
+            {
+              type: "button",
+              text: "Default",
+              onClick: () => {
+                layer.set(v => ({ ...v, scaleType: "default" }));
+                chart.workers.generateAllInstructions();
+              },
+            },
+            {
+              type: "button",
+              text: "Percent",
+              onClick: () => {
+                layer.set(v => ({ ...v, scaleType: "percent" }));
+                chart.workers.generateAllInstructions();
+              },
+            },
+            {
+              type: "button",
+              text: "Normalized",
+              onClick: () => {
+                layer.set(v => ({ ...v, scaleType: "normalized" }));
+                chart.workers.generateAllInstructions();
+              },
+            },
+          ],
+        },
+      ],
+    };
+  },
 };
 
 export default {
