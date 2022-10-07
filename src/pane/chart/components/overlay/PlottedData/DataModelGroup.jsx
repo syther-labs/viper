@@ -12,9 +12,7 @@ export default function DatasetGroup(props) {
   }
 
   function onRemove() {
-    const plots = $chart.plots.get();
-    plots.splice(index, 1);
-    $chart.plots.set([...plots]);
+    $chart.removePlot(index);
   }
 
   const datasetName = () => {

@@ -45,6 +45,11 @@ const methods = {
     }
   },
 
+  removeFromQueue({ setId }) {
+    queue.delete(setId);
+    this.emptySet({ setId });
+  },
+
   emptySet({ setId }) {
     // Delete set info
     delete sets[setId];

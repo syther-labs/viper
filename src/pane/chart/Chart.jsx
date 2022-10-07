@@ -353,18 +353,32 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
   },
 
   removeIndicator(indicator) {
-    const { id, dataset } = indicator.get();
+    const { setId, plot } = indicator.get();
 
-    // Delete indicator reference from dataset
-    const i = dataset.get().indicatorIds.indexOf(id);
-    dataset.get().indicatorIds.splice(i, 1);
-    dataset.set(v => ({ ...v }));
+    // Delete indicator reference from plot
+    const i = plot.get().indicatorIds.indexOf(setId);
+    plot.get().indicatorIds.splice(i, 1);
+    plot.set(v => ({ ...v }));
 
     // Delete from indicators store
     this.indicators.set(v => {
-      delete v[id];
+      delete v[setId];
       return { ...v };
     });
+
+    this.workers.removeFromQueue({ setId });
+    this.workers.generateAllInstructions();
+  },
+
+  removePlot(index) {
+    const plots = this.plots.get();
+
+    for (const setId of plots[index].get().indicatorIds) {
+      this.removeIndicator(this.indicators.get()[setId]);
+    }
+
+    plots.splice(index, 1);
+    this.plots.set([...plots]);
   },
 
   addLayer(heightUnit) {

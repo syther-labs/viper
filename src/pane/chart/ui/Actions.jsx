@@ -5,8 +5,6 @@ import { modal } from "../../../stores/ui";
 import { getTimeframeText } from "../data/timeframes";
 
 export default function Timeframes() {
-  const $chart = activePane().get().app;
-
   function showAddDataModal() {
     modal.set({
       visible: true,
@@ -44,7 +42,7 @@ export default function Timeframes() {
           <li>
             {Action({
               type: "button",
-              onClick: () => $chart.setTimeframe(timeframe()),
+              onClick: () => activePane().get().app.setTimeframe(timeframe()),
               text: getTimeframeText(timeframe()),
             })}
           </li>
