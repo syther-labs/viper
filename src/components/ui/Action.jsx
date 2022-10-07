@@ -1,4 +1,4 @@
-import { Show } from 'solid-js';
+import { Show } from "solid-js";
 
 /**
  * Display an Action at top of UI navbar for actively viewed component
@@ -12,20 +12,20 @@ export default function Action(action, index) {
         <img
           src={action.imageUrl}
           className="w-full h-full"
-          classList={{ 'mr-2': action.text?.length }}
+          classList={{ "mr-2": action.text?.length }}
         />
       </Show>
       <Show when={action.text?.length}>{action.text}</Show>
     </div>
   );
 
-  if (action.type === 'link') {
+  if (action.type === "link") {
     return (
       <a href={action.link} target="_blank">
         {content}
       </a>
     );
-  } else if (action.type === 'button') {
+  } else if (action.type === "button") {
     return (
       <button onClick={action.onClick} disabled={action.disabled}>
         {content}

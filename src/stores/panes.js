@@ -30,7 +30,7 @@ export function createPane(Pane) {
     pos: undefined,
   });
 
-  const app = Pane.app({
+  const { app, menus } = Pane({
     element,
     config: {},
     $api: {
@@ -45,6 +45,9 @@ export function createPane(Pane) {
       getAllDataPoints(request) {
         global.data.getAllDataPoints(id, request);
       },
+      unsubscribeFromDataset(request) {
+        global.data.unsubscribeFromDataset(id, request);
+      },
     },
   });
   if (typeof app.on !== "function") app.on = () => {};
@@ -53,8 +56,7 @@ export function createPane(Pane) {
   pane.set(v => ({
     ...v,
     app,
-    actions: Pane.actions,
-    contextmenus: Pane.contextmenus,
+    menus: menus(),
   }));
 
   panes.set(v => ({ ...v, [id]: pane }));

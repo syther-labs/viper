@@ -193,14 +193,11 @@ export default ({ $chart }) => ({
     );
   },
 
-  emptySet({ renderingQueueId }) {
+  emptySet({ setId }) {
     this.workers.chart.postMessage(
       j({
-        type: "runComputedStateMethod",
-        data: {
-          method: "emptySet",
-          params: { renderingQueueId },
-        },
+        method: "emptySet",
+        params: { setId },
       })
     );
   },
@@ -208,30 +205,19 @@ export default ({ $chart }) => ({
   emptyAllSets() {
     this.workers.chart.postMessage(
       j({
-        type: "runComputedStateMethod",
-        data: {
-          method: "emptyAllSets",
-          params: {},
-        },
+        method: "emptyAllSets",
+        params: {},
       })
     );
   },
 
-  removeFromQueue({ renderingQueueIds }) {
+  removeFromQueue({ setId }) {
     this.workers.chart.postMessage(
       j({
-        type: "runComputedStateMethod",
-        data: {
-          method: "removeFromQueue",
-          params: { renderingQueueIds },
-        },
+        method: "removeFromQueue",
+        params: { setId },
       })
     );
-
-    // const { canvas } = this.chart.subcharts.main;
-    // for (const id of renderingQueueIds) {
-    //   canvas.RE.removeFromRenderingOrder(id);
-    // }
   },
 
   /**
@@ -253,6 +239,7 @@ export default ({ $chart }) => ({
         this.instructions = data.instructions;
         break;
       default:
+        if (!this.resolveQueue[id]) return;
         this.resolveQueue[id](data);
         delete this.resolveQueue[id];
         break;

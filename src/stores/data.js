@@ -116,6 +116,11 @@ class DataState {
     });
   }
 
+  unsubscribeFromDataset(paneId, { source, name, modelId, timeframe }) {
+    const dataset = this.addOrGetDataset({ source, name, modelId, timeframe });
+    dataset.unsubscribe(paneId);
+  }
+
   buildRequest({ source, name, timeframe, modelId }, { start, end }) {
     // const { maxItemsPerRequest = 300 } =
     //   this.sources[dataset.source][dataset.name];
@@ -278,7 +283,9 @@ class Dataset {
     this.subscribers.delete(paneId);
 
     // If no more subscribers, delete from memory
-    delete global.data.datasets[this.getId()];
+    if (this.subscribers.size === 0) {
+      delete global.data.datasets[this.getId()];
+    }
   }
 }
 

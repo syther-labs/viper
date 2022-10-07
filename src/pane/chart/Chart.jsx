@@ -8,6 +8,7 @@ import { v } from "../../api/api";
 
 import dimensions from "./local-state/dimensions";
 import workers from "./workers/workers.js";
+import Instructions from "./local-state/Instructions";
 
 /**
  * Create a new chart
@@ -197,6 +198,35 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     if (ppe < 1 || ppe > 1000) return;
 
     this.setVisibleRange({ start, end });
+  },
+
+  setTimeframe(timeframe) {
+    if (timeframe === this.timeframe.get()) return;
+
+    // Clear all sets
+    this.workers.emptyAllSets();
+
+    // Loop through all plots and unsubscribe from all datasets
+    for (const plot of Object.values(this.plots.get())) {
+      const { dataset, indicatorIds } = plot.get();
+
+      for (const indicatorId of indicatorIds) {
+        const { model } = this.indicators.get()[indicatorId].get();
+
+        this.$api.unsubscribeFromDataset({
+          source: dataset.source,
+          name: dataset.name,
+          modelId: model,
+          timeframe: this.timeframe.get(),
+        });
+      }
+    }
+
+    // Set the timeframe
+    this.timeframe.set(timeframe);
+
+    // Reset range
+    this.setInitialVisibleRange();
   },
 
   createDataModelGroup({ source, name }) {

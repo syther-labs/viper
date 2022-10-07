@@ -1,8 +1,9 @@
 import { Show } from "solid-js";
 import { actions } from "../../stores/ui";
 import Action from "./Action";
-import { createPane, gridEdit } from "../../stores/panes";
+import { activePane, createPane, gridEdit } from "../../stores/panes";
 import Chart from "../../pane/chart";
+import Timeframes from "../../pane/chart/ui/Actions";
 
 export default function Navbar() {
   return (
@@ -17,7 +18,7 @@ export default function Navbar() {
 
       {/* Pane defined actions */}
       <div className="border-z-8 border-r-1 h-full">
-        <Show
+        {/* <Show
           when={actions.length}
           fallback={Action({
             type: "button",
@@ -26,6 +27,9 @@ export default function Navbar() {
           })}
         >
           <For each={actions}>{Action}</For>
+        </Show> */}
+        <Show when={activePane()?.get().type === "chart"}>
+          <Timeframes />
         </Show>
       </div>
 

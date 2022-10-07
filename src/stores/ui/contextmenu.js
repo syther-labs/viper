@@ -51,8 +51,8 @@ export function onContextMenu(e) {
   let title = "";
 
   if (pane) {
-    const { app, contextmenus } = pane.get();
-    const menu = contextmenus[contextMenuId](app, e);
+    const { app, menus } = pane.get();
+    const menu = menus[contextMenuId](app, e);
     title = menu.title;
     config.push(...menu.config);
   }

@@ -1,9 +1,14 @@
 import { Index } from "solid-js";
+import Action from "../../../components/ui/Action";
+import { activePane } from "../../../stores/panes";
+import { modal } from "../../../stores/ui";
 import { getTimeframeText } from "../data/timeframes";
 
-export default function Timeframes({ $chart }) {
+export default function Timeframes() {
+  const $chart = activePane().get().app;
+
   function showAddDataModal() {
-    $chart.ui.modal.set({
+    modal.set({
       visible: true,
       title: "Plot data",
       component: AddDataModal,
@@ -21,19 +26,27 @@ export default function Timeframes({ $chart }) {
           <span className="leading-0">Plot Data</span>
         </button>
       </li>
-      <Index each={$chart.config.timeframes.get()}>
+      <Index
+        each={[
+          1000,
+          5000,
+          15000,
+          30000,
+          6e4,
+          6e4 * 5,
+          6e4 * 15,
+          3.6e6,
+          3.6e6 * 4,
+          3.6e6 * 24,
+        ]}
+      >
         {timeframe => (
           <li>
-            <button
-              onClick={() => $chart.timeframe.set(timeframe())}
-              className="p-2"
-              classList={{
-                "bg-gray-300 text-gray-900 font-bold":
-                  $chart.timeframe.get() === timeframe(),
-              }}
-            >
-              {getTimeframeText(timeframe())}
-            </button>
+            {Action({
+              type: "button",
+              onClick: () => $chart.setTimeframe(timeframe()),
+              text: getTimeframeText(timeframe()),
+            })}
           </li>
         )}
       </Index>

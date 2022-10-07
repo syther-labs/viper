@@ -45,6 +45,30 @@ const methods = {
     }
   },
 
+  emptySet({ setId }) {
+    // Delete set info
+    delete sets[setId];
+    delete computedState[setId];
+
+    // Re calculate max decimal places when sets have changed
+    // this.calculateMaxDecimalPlaces();
+
+    // Delete instructions
+    delete instructions.main.values[setId];
+    delete instructions.main.plots[setId];
+    delete instructions.yScale.plots[setId];
+    postMessage({
+      id: "updateInstructions",
+      data: { instructions },
+    });
+  },
+
+  emptyAllSets() {
+    for (const setId in sets) {
+      this.emptySet({ setId });
+    }
+  },
+
   calculateOneSet({ setId, timestamps, dataset, dataModel }) {
     const { timeframe } = dataset;
 
