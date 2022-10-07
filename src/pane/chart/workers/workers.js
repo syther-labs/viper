@@ -78,7 +78,7 @@ export default ({ $chart }) => ({
     await this.generateAllInstructions();
   },
 
-  async calculateOneSet({ setId, timestamps, dataset }) {
+  async calculateOneSet({ setId, timestamps, dataset, dataModel }) {
     await new Promise(resolve => {
       const id = this.addToResolveQueue(resolve);
 
@@ -90,6 +90,7 @@ export default ({ $chart }) => ({
             setId,
             timestamps,
             dataset,
+            dataModel,
           },
         })
       );

@@ -88,7 +88,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
 
     // On dataset update
     else if (event === "data") {
-      const { dataset, timestamps } = data;
+      const { dataset, dataModel, timestamps } = data;
       const { source, name, timeframe } = dataset;
 
       if (timeframe !== this.timeframe.get()) return;
@@ -108,6 +108,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
             setId,
             timestamps,
             dataset,
+            dataModel,
           });
         }
       }
@@ -168,7 +169,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
         source,
         name,
         timeframe: this.timeframe.get(),
-        modelId: indicator.model.id,
+        modelId: indicator.model,
         start,
         end,
       });
@@ -277,7 +278,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
       source,
       name,
       timeframe,
-      modelId: model.id,
+      modelId: model,
     });
 
     // TODO TEMP fix to load initial data

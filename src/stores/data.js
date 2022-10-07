@@ -90,6 +90,7 @@ class DataState {
 
       pane.get().app.on("data", {
         dataset,
+        dataModel: global.dataModels[modelId],
         timestamps: utils.getAllTimestampsIn(start, end, timeframe),
       });
     }
@@ -106,6 +107,7 @@ class DataState {
 
     pane.get().app.on("data", {
       dataset,
+      dataModel: global.dataModels[modelId],
       timestamps: utils.getAllTimestampsIn(
         dataset.minTime,
         dataset.maxTime,
@@ -262,6 +264,7 @@ class Dataset {
           timeframe: this.timeframe,
           data: this.data,
         },
+        dataModel: global.dataModels[this.modelId],
         timestamps,
       });
     }

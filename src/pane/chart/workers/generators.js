@@ -35,7 +35,7 @@ export default {
 
       const { data } = set;
 
-      const getY = (val) =>
+      const getY = val =>
         top +
         Math.max(
           0,
@@ -282,7 +282,7 @@ export default {
             font: "bold 10px Arial",
           });
 
-          const text = `${indicator.model.label}`;
+          const text = buildLabel(indicator.model, indicator.dataset);
           const textWidth = text.length * 7;
 
           mainInstructions.push({
@@ -340,7 +340,7 @@ export default {
           .plus(interval.minus(new Decimal(max).modulo(interval)))
           .toNumber();
 
-        const getY = (v) =>
+        const getY = v =>
           utils.getYCoordByPrice(yRanges[id].min, yRanges[id].max, height, v);
 
         scales[id] = [];
@@ -381,7 +381,7 @@ export default {
         }
       }
 
-      const getX = (t) =>
+      const getX = t =>
         utils.getXCoordByTimestamp(
           visibleRange.start,
           visibleRange.end,
@@ -437,3 +437,14 @@ export default {
     },
   },
 };
+
+function buildLabel(model, dataset) {
+  let { label } = model;
+  const { source, name } = dataset;
+
+  label = label.replaceAll("%s", source);
+  label = label.replaceAll("%n", name);
+  label = label.replaceAll("%m", model.name);
+
+  return label;
+}

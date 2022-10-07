@@ -45,11 +45,14 @@ const methods = {
     }
   },
 
-  calculateOneSet({ setId, timestamps, dataset }) {
+  calculateOneSet({ setId, timestamps, dataset, dataModel }) {
     const { timeframe } = dataset;
 
     const indicator = queue.get(setId);
     indicator.draw = plot_types.getIndicatorById(indicator.id).draw;
+
+    indicator.dataset = dataset;
+    indicator.model = dataModel;
 
     // If indicator is set to not visible, don't calculate data
     if (!indicator.visible) return;
