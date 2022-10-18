@@ -8,6 +8,7 @@ import { v } from "../../api/api";
 
 import dimensions from "./local-state/dimensions";
 import workers from "./workers/workers.js";
+import { uniqueId } from "lodash";
 
 /**
  * Create a new chart
@@ -16,13 +17,7 @@ import workers from "./workers/workers.js";
  * @param {number} param0.timeframe Initial value for viewing timeframe (defaults to 3.6e6)
  * @param {Object} param0.$api The API for communicating with parent
  */
-export default ({
-  element,
-  timeframe = 3.6e6,
-  state = {},
-  config = {},
-  $api,
-}) => ({
+export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
   // Parent stuff
   element,
   $api,
@@ -36,7 +31,6 @@ export default ({
 
   // Presistent state
   state: {
-    ...state,
     timeframe: v(timeframe),
     name: v("Untitled chart"),
     plots: v([]),
@@ -61,6 +55,8 @@ export default ({
     }),
     y: v({}),
   },
+  sets: {},
+  regl: null,
 
   /**
    * On parent emitted events
@@ -83,8 +79,6 @@ export default ({
       if (!Object.keys(this.state.ranges.y.get()).length) {
         this.addLayer(10);
       }
-
-      this.setInitialVisibleRange();
 
       render(() => <App $chart={this} />, this.element);
     }
@@ -147,10 +141,12 @@ export default ({
     newRange = {},
     layerId = Object.keys(this.state.ranges.y.get())[0]
   ) {
+    if (this.regl === null) return;
+
     const xRange = this.state.ranges.x.get();
     const yRange = this.state.ranges.y.get()[layerId].get().range;
 
-    const {
+    let {
       start = xRange.start,
       end = xRange.end,
       min = yRange.min,
@@ -162,6 +158,7 @@ export default ({
       this.state.ranges.x.set({ start, end });
     }
 
+    // If y range changed
     if (min !== yRange.min || max !== yRange.max) {
       this.state.ranges.y.get()[layerId].set(v => ({
         ...v,
@@ -169,7 +166,112 @@ export default ({
       }));
     }
 
-    this.workers.generateAllInstructions();
+    const indicators = this.state.indicators.get();
+    const yRanges = this.state.ranges.y.get();
+
+    const timestamps = utils.getAllTimestampsIn(
+      start,
+      end,
+      this.state.timeframe.get()
+    );
+
+    // Loop through all layers
+    for (const layerId in yRanges) {
+      const { scaleType, indicatorIds } = yRanges[layerId].get();
+
+      // Loop through all sets and update data buffers with updated data
+      const inView = [];
+      const minsAndMaxs = [];
+
+      let i = 0;
+
+      // Loop through all indicators in layer
+      for (const indicatorId of indicatorIds) {
+        const { visible, model } = indicators[indicatorId].get();
+        const set = this.sets[indicatorId];
+
+        if (!visible) continue;
+
+        inView[i] = [];
+        const plots = [];
+
+        let first = undefined;
+
+        let missingPoints = [];
+
+        // Loop through each time
+        for (const timestamp of timestamps) {
+          // If no data or never attempted to load data at time
+          if (set.data[timestamp] === undefined) {
+            missingPoints.push(timestamp);
+            continue;
+          }
+
+          // If data has already been attempted to be loaded
+          if (set.data[timestamp] === null) continue;
+
+          let j = 0;
+          for (const { type, values } of set.data[timestamp]) {
+            if (first === undefined) first = values.series[0];
+
+            if (!inView[i][j]) inView[i][j] = { type: "", values: [] };
+
+            // Add timestamp to data
+            inView[i][j].values.push(timestamp);
+
+            for (let value of values.series) {
+              if (scaleType === "percent") {
+                value = ((value - first) / Math.abs(first)) * 100;
+              }
+
+              inView[i][j].type = type;
+              inView[i][j].values.push(value);
+              plots.push(value);
+            }
+
+            j++;
+          }
+        }
+
+        // If missing data points from set, request them from parent
+        // if (missingPoints.length) {
+        //   // Request data from master
+        //   this.$api.getDataPoints({
+        //     source,
+        //     name,
+        //     timeframe: this.state.timeframe.get(),
+        //     modelId: model,
+        //     start: Math.min.apply(this, missingPoints),
+        //     end: Math.max.apply(this, missingPoints),
+        //   });
+        // }
+
+        const min = Math.min.apply(this, plots);
+        const max = Math.max.apply(this, plots);
+        minsAndMaxs.push(min, max);
+
+        set.min = min;
+        set.max = max;
+
+        for (let j = 0; j < inView[i].length; j++) {
+          const { type, values } = inView[i][j];
+
+          if (!set.buffers[j]) {
+            set.buffers[j] = { type, length: 0, buffer: this.regl.buffer([]) };
+          }
+
+          set.buffers[j].length = values.length;
+          set.buffers[j].buffer(values);
+        }
+
+        i++;
+      }
+
+      min = Math.min.apply(this, minsAndMaxs);
+      max = Math.max.apply(this, minsAndMaxs);
+    }
+
+    /// OLD CODE BEYOND
 
     // Fire request for any missing data
     for (const setId in this.state.indicators.get()) {
@@ -280,26 +382,27 @@ export default ({
       layerId = this.addLayer(3);
     }
 
-    const color = utils.randomHexColor();
+    const setId = uniqueId();
 
-    indicator = {
+    indicator = v({
       ...indicator,
-      color,
+      setId,
+      renderingQueueId: setId,
+      color: utils.randomHexColor(),
       plot,
       model,
       visible,
       layerId,
-    };
-
-    const { setId } = await this.workers.addToQueue({
-      indicator,
     });
 
-    indicator.setId = setId;
-    indicator.renderingQueueId = setId;
+    this.workers.addToQueue({ indicator: indicator.get() });
 
-    // Create the indicator to be added to state
-    indicator = v(indicator);
+    this.sets[setId] = {
+      min: Infinity,
+      max: -Infinity,
+      data: {},
+      buffers: [],
+    };
 
     this.state.indicators.set(v => ({
       ...v,
@@ -308,6 +411,12 @@ export default ({
 
     // Add a reference to the indicator in the dataset group indicators array
     plot.set(v => {
+      v.indicatorIds = [...v.indicatorIds, setId];
+      return { ...v };
+    });
+
+    // Add reference to indicator
+    this.state.ranges.y.get()[layerId].set(v => {
       v.indicatorIds = [...v.indicatorIds, setId];
       return { ...v };
     });
@@ -365,12 +474,19 @@ export default ({
   },
 
   removeIndicator(indicator) {
-    const { setId, plot } = indicator.get();
+    const { setId, plot, layerId } = indicator.get();
 
     // Delete indicator reference from plot
     const i = plot.get().indicatorIds.indexOf(setId);
     plot.get().indicatorIds.splice(i, 1);
     plot.set(v => ({ ...v }));
+
+    // Delete indicator reference from layer
+    this.state.ranges.y.get()[layerId].set(v => {
+      const i = v.indicatorIds.indexOf(setId);
+      v.indicatorIds.splice(i, 1);
+      return { ...v };
+    });
 
     // Delete from indicators store
     this.state.indicators.set(v => {
@@ -403,7 +519,7 @@ export default ({
       visible: true,
       fullscreen: false,
       scaleType: "default",
-      indicators: {},
+      indicatorIds: [],
       range: { min: Infinity, max: -Infinity },
     });
 

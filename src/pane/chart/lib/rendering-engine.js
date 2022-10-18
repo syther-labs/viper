@@ -1,29 +1,35 @@
-import Utils from "../utils.js";
+import { mat4 } from "gl-matrix";
+import { uniqueId } from "lodash";
+import {
+  BackgroundProgram,
+  CandleBodyProgram,
+  CandleStickProgram,
+  LineProgram,
+} from "./gl-programs.js";
+
+// TODO TEMP
+const datastore = {
+  colors: new Array(200)
+    .fill()
+    .map(() => [Math.random(), Math.random(), Math.random(), 1]),
+};
 
 /**
  * Handles render queue and layers including order
  */
 export default class RenderingEngine {
-  /**
-   * @param {Canvas} canvas
-   * @param {object} settings
-   */
-  constructor({ $chart, canvas, type, settings }) {
+  constructor({ $chart }) {
     this.$chart = $chart;
-    this.canvas = canvas;
-    this.type = type;
 
-    this.overlayQueue = new Map();
-    /**
-     * Rendering order of queue Map IDs (first rendered in back, last rendered in front)
-     * @type {Array<string>} id
-     */
-    this.renderingOrder = [];
+    const { regl } = $chart;
 
-    this.initDraw();
-  }
+    this.programs = {
+      line: LineProgram(regl),
+      background: BackgroundProgram(regl),
+      candlestick: CandleStickProgram(regl),
+      candlebody: CandleBodyProgram(regl),
+    };
 
-  initDraw() {
     requestAnimationFrame(this.recursiveDraw.bind(this));
   }
 
@@ -37,314 +43,95 @@ export default class RenderingEngine {
    * This can be used for when user interacts with the window like resizing
    */
   draw() {
-    const instr = this.$chart.workers.instructions[this.type];
+    const width = this.$chart.dimensions.width.get();
+    const height = this.$chart.dimensions.height.get();
+    const timeframe = this.$chart.state.timeframe.get();
 
-    // Reset canvas
-    this.canvas.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    const viewport = { x: 0, y: 0, width, height };
 
-    if (this.type === "yScale") {
-      const now = Date.now();
-      let isShowingCountdown = false;
+    let i = 0;
 
-      const width = this.$chart.dimensions.yScale.width.get();
-      const height = this.$chart.dimensions.yScale.height.get();
+    this.programs.background({ viewport });
 
-      // Draw background
-      this.canvas.drawBox("#080019", [0, 0, width, height]);
+    for (const setId in this.$chart.sets) {
+      const set = this.$chart.sets[setId];
 
-      let maxWidth = 0;
+      // Get indicator
+      const { layerId } = this.$chart.state.indicators.get()[setId].get();
 
-      // Draw all scales
-      for (const layerId in instr.scales) {
-        for (const item of instr.scales[layerId]) {
-          const { x, y, color, text } = item;
-          this.canvas.drawText(color, [x, y], text);
-        }
+      // Get layer
+      const layer = this.$chart.state.ranges.y.get()[layerId].get();
+
+      let { min, max } = layer.range;
+
+      if (layer.scaleType === "normalized") {
+        min = set.min;
+        max = set.max;
       }
 
-      // Loop through all yScale plot instructions and measure the width of all texts and get max width
-      for (const key in instr.plots) {
-        // If no instructions for set, continue
-        if (!instr.plots[key]) continue;
-        const { layerId, values } = instr.plots[key];
-        if (!values || !values.length) continue;
-        const [box, text] = values;
-        const { ctx } = this.canvas;
+      const range5P = (max - min) * 0.05;
+      min -= range5P;
+      max += range5P;
 
-        const textWidth = Math.ceil(ctx.measureText(text.text).width);
-        if (textWidth > maxWidth) maxWidth = textWidth;
+      const { start, end } = this.$chart.state.ranges.x.get();
+      console.log(start, end, min, max);
+      const projection = mat4.ortho(mat4.create(), start, end, min, max, 0, -1);
 
-        // Draw the box and text
-        this.canvas.drawBox(box.color, [box.x, box.y, box.w, box.h]);
-        this.canvas.drawText(text.color, [text.x, text.y], text.text, {
-          font: text.font,
-        });
-
-        // Draw realtime countdown to next timeframe
-        if (!isShowingCountdown) {
-          const timeLeftY = box.y + box.h;
-          const timeLeft = Utils.formatTimeLeft(
-            now,
-            this.$chart.state.timeframe.get()
-          );
-          this.canvas.drawBox(box.color, [box.x, timeLeftY, box.w, box.h]);
-          this.canvas.drawText(
-            text.color,
-            [text.x, timeLeftY + box.h / 2],
-            timeLeft,
-            {
-              font: text.font,
-            }
-          );
-          isShowingCountdown = true;
-        }
-      }
-
-      maxWidth = Math.max((maxWidth += 10), 50);
-
-      // Check if maxWidth is not equal to current width of yScale
-      const newScale = Math.floor(maxWidth / 5);
-      const existingScale = Math.floor(width / 5);
-      //   TODO reimplement
-      if (newScale !== existingScale) {
-        // chartDimensions.setYScaleWidth(maxWidth);
-        // this.$$chart.chart.setVisibleRange({});
-      }
-
-      // Crosshair
-      //   const p = this.$$chart.global.crosshair.price;
-      //   const { y } =
-      //     this.$$chart.global.crosshair.crosshairs[this.$$chart.chart.id];
-
-      //   if (this.$$chart.global.crosshair.visible) {
-      //     for (const id in y) {
-      //       const layer = this.$$chart.chart.ranges.y[id];
-      //       if (!layer) continue;
-      //       const text = Helpers.yScale.scales.scaleText(p, layer.scaleType);
-
-      //       this.canvas.drawBox("#424242", [0, y[id] - 10, width, 20]);
-      //       this.canvas.drawText("#fff", [width / 2, y[id] + 3], text);
-      //     }
-      //   }
-
-      // Border left, top, right
-      const layers = this.$chart.dimensions.main.layers.get();
-      this.canvas.drawBox("#2E2E2E", [0, 0, width, 2]);
-
-      // Border breakpoints / bottom
-      for (const layerId in layers) {
-        const { top, height } = layers[layerId];
-        this.canvas.drawBox("#2E2E2E", [0, top + height - 2, width, 4]);
-      }
-    }
-
-    if (this.type === "xScale") {
-      const width = this.$chart.dimensions.xScale.width.get();
-      const height = this.$chart.dimensions.xScale.height.get();
-
-      // Draw background
-      this.canvas.drawBox("#080019", [0, 0, width, height]);
-
-      // Draw all scales
-      for (const { color, x, y, text } of instr.scales) {
-        this.canvas.drawText(color, [x, y], text);
-      }
-
-      // Crosshair
-      // const { crosshair } = this.$$chart.global;
-      // if (crosshair.visible) {
-      //   const d = new Date(crosshair.timestamp);
-
-      //   const da = `0${d.getDate()}`.slice(-2);
-      //   const mo = constants.MONTHS[d.getMonth()].short;
-      //   const yr = d.getFullYear().toString().substr(2, 2);
-      //   const ho = d.getHours();
-      //   const mi = `0${d.getMinutes()}`.slice(-2);
-
-      //   const text = `${da} ${mo} '${yr}  ${ho}:${mi}`;
-
-      //   const { x } = crosshair.crosshairs[this.$$chart.chart.id];
-      //   this.canvas.drawBox("#424242", [x - 45, 0, 90, 30]);
-      //   this.canvas.drawText("#fff", [x, 15], text);
-      // }
-    }
-
-    if (this.type === "main") {
-      // Cursor
-      // if (this.$$chart.global.events.mousedown) {
-      //   this.canvas.setCursor("grabbing");
-      // } else if (this.$$chart.global.events.keys.Control) {
-      //   this.canvas.setCursor("zoom-in");
-      // } else if (this.$$chart.global.events.keys.Shift) {
-      //   this.canvas.setCursor("ns-resize");
-      // } else if (this.canvas.cursor !== "crosshair") {
-      //   this.canvas.setCursor("crosshair");
-      // }
-
-      const width = this.$chart.dimensions.main.width.get();
-      const height = this.$chart.dimensions.main.height.get();
-
-      // Draw background
-      this.canvas.drawBox("#080019", [0, 0, width, height]);
-
-      // Draw grid
-      (() => {
-        const { xScale, yScale } = this.$chart.workers.instructions;
-        const color = "#43434377";
-
-        for (const { x } of xScale.scales) {
-          this.canvas.drawLine(color, [x, 0, x, height]);
-        }
-
-        for (const layerId in yScale.scales) {
-          const values = yScale.scales[layerId];
-          for (const { y } of values) {
-            this.canvas.drawLine(color, [0, y, width, y]);
-          }
-        }
-      })();
-
-      const ids = Object.keys(instr.values);
-
-      // Loop through all rendering ids
-      for (const id of ids) {
-        // let item = this.overlayQueue.get(id);
-
-        // // If overlay and not indicator
-        // if (item) {
-        //   const { overlay } = item;
-        //   overlay.drawFunc.bind(overlay)();
-        //   continue;
-        // }
-
-        // Else, maybe this is an indicator.
-        if (!instr.values[id]) continue;
-        const { layerId, values } = instr.values[id];
-        if (!values) continue;
-
-        const times = Object.keys(values);
-
-        const parseInstruction = (a, i, j) => {
-          if (a.type === "line") {
-            if (i === undefined || j === undefined) return;
-            let b = values[times[i + 1]];
-            if (!b) return;
-            b = b[j];
-            if (!b) return;
-            this.canvas.drawLine(a.color, [a.x, a.y, b.x, b.y], a.linewidth);
-          } else if (a.type === "fill") {
-            if (i === undefined || j === undefined) return;
-            let b = values[times[i + 1]];
-            if (!b) return;
-            b = b[j];
-            this.canvas.drawPolygon(a.color, [
-              b.x,
-              b.y1,
-              a.x,
-              a.y1,
-              a.x,
-              a.y2,
-              b.x,
-              b.y2,
-            ]);
-          } else if (a.type === "polygon") {
-            this.canvas.drawPolygon(a.color, a.coords);
-          } else if (a.type === "box") {
-            this.canvas.drawBox(a.color, [a.x, a.y, a.w, a.h]);
-          } else if (a.type === "single-line") {
-            this.canvas.drawLine(a.color, [a.x, a.y, a.x2, a.y2]);
-          } else if (a.type === "text") {
-            this.canvas.drawText(a.color, [a.x, a.y], a.text, {
-              font: a.font,
-              textAlign: a.textAlign,
-              stroke: a.stroke,
+      // Loop through all buffers
+      for (const { type, buffer, length } of set.buffers) {
+        switch (type) {
+          case "line":
+            this.programs.line({
+              points: buffer,
+              width: (max - min) / 500,
+              color: datastore.colors[i],
+              projection,
+              viewport,
+              segments: length / 2 - 2,
             });
-          }
-        };
-
-        for (let i = 0; i < times.length; i++) {
-          const instructionsForTime = values[times[i]];
-          for (let j = 0; j < instructionsForTime.length; j++) {
-            parseInstruction(instructionsForTime[j], i, j);
-          }
+            break;
+          case "candle":
+            this.programs.candlestick({
+              points: buffer,
+              color: datastore.colors[i],
+              projection,
+              viewport,
+              timeframe,
+              segments: length / 5,
+            });
+            this.programs.candlebody({
+              points: buffer,
+              color: datastore.colors[i],
+              projection,
+              viewport,
+              timeframe,
+              segments: length / 5,
+            });
+            break;
         }
       }
 
-      // Render all label plots
-      for (const id of ids) {
-        if (!instr.plots[id]) continue;
-        const { layerId, values } = instr.plots[id];
-        if (!values || !values.length) continue;
-        const [box, text] = values;
-
-        // Draw the box and text
-        this.canvas.drawBox(box.color, [box.x, box.y, box.w, box.h]);
-        this.canvas.drawText(text.color, [text.x, text.y], text.text, {
-          font: text.font,
-        });
-      }
-
-      // Check if in fullscreen
-      const y = this.$chart.state.ranges.y.get();
-      const found = Object.values(y)
-        .map(y => y.get())
-        .find(({ fullscreen }) => fullscreen);
-      const borderColor = found ? "#0a6102" : "#2E2E2E";
-
-      // Border left, top, right
-      const layers = this.$chart.dimensions.main.layers.get();
-      this.canvas.drawBox(borderColor, [0, 0, 2, height]);
-      this.canvas.drawBox(borderColor, [0, 0, width, 2]);
-      this.canvas.drawBox(borderColor, [width - 2, 0, 2, height]);
-
-      // Border breakpoints / bottom
-      for (const layerId in layers) {
-        const { top, height } = layers[layerId];
-        this.canvas.drawBox(borderColor, [0, top + height - 2, width, 4]);
-      }
+      i++;
     }
   }
 
-  addToRenderingOrder(id, index = this.renderingOrder.length) {
-    this.renderingOrder.join();
-    this.renderingOrder.splice(index, 0, id);
+  addSet(type, name) {
+    const id = uniqueId();
+
+    sets[id] = {
+      id,
+      type,
+      name,
+      max: -Infinity,
+      min: Infinity,
+      length: 0,
+      buffer: regl.buffer([]),
+    };
+
+    return sets[id];
   }
 
-  removeFromRenderingOrder(id) {
-    const i = this.renderingOrder.indexOf(id);
-    delete instructions[id];
-    this.renderingOrder.splice(i, 1);
-  }
-
-  adjustInstructions({ newRange, oldRange }) {
-    const { width, height } = this.canvas;
-
-    const newRangeWidth = newRange.end - newRange.start;
-    const newRangeHeight = newRange.max - newRange.min;
-
-    const leftOffset = oldRange.start - newRange.start;
-    const rightOffset = oldRange.end - newRange.end;
-    if (leftOffset !== rightOffset) {
-    }
-
-    // Calculate percentage difference between widths
-    const x = -((newRange.start - oldRange.start) / newRangeWidth) * width;
-    const y = ((newRange.min - oldRange.min) / newRangeHeight) * height;
-  }
-
-  addOverlay(overlay) {
-    let id = Utils.uniqueId();
-    do {
-      id = Utils.uniqueId();
-    } while (this.renderingOrder.includes(id));
-
-    this.overlayQueue.set(id, {
-      overlay,
-      visible: true,
-    });
-
-    this.addToRenderingOrder(id);
-
-    return id;
+  removeSet(id) {
+    delete this.sets[id];
   }
 }

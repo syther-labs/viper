@@ -20,8 +20,10 @@
     "@solid-primitives/event-bus": "^0.1.2",
     "decimal.js": "^10.4.1",
     "dexie": "^3.2.2",
+    "gl-matrix": "^3.4.3",
     "gridstack": "^6.0.2",
     "lodash": "^4.17.21",
+    "regl": "^2.1.0",
     "remixicon": "^2.5.0",
     "solid-js": "^1.5.1"
   }

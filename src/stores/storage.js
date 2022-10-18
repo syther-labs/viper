@@ -1,5 +1,6 @@
 import Dexie from "dexie";
 import { v } from "../api/api";
+import panes from "./panes";
 
 export default class Storage {
   constructor() {

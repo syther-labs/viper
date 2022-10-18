@@ -24,9 +24,7 @@ self.addEventListener("message", async e => {
 
 const methods = {
   addToQueue({ indicator }) {
-    let setId = utils.uniqueId();
-    queue.set(setId, indicator);
-    return { setId };
+    queue.set(indicator.setId, indicator);
   },
 
   setIndicatorVisibility({ setId, visible }) {
@@ -57,15 +55,6 @@ const methods = {
 
     // Re calculate max decimal places when sets have changed
     // this.calculateMaxDecimalPlaces();
-
-    // Delete instructions
-    delete instructions.main.values[setId];
-    delete instructions.main.plots[setId];
-    delete instructions.yScale.plots[setId];
-    postMessage({
-      id: "updateInstructions",
-      data: { instructions },
-    });
   },
 
   emptyAllSets() {
@@ -213,6 +202,14 @@ const methods = {
         },
       });
     }
+
+    postMessage({
+      id: "updateSet",
+      data: {
+        setId,
+        data: set.data,
+      },
+    });
   },
 
   generateAllInstructions({
