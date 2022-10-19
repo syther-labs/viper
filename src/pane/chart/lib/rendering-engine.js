@@ -74,7 +74,6 @@ export default class RenderingEngine {
       max += range5P;
 
       const { start, end } = this.$chart.state.ranges.x.get();
-      console.log(start, end, min, max);
       const projection = mat4.ortho(mat4.create(), start, end, min, max, 0, -1);
 
       // Loop through all buffers

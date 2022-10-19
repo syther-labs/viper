@@ -9,6 +9,8 @@ import { v } from "../../api/api";
 import dimensions from "./local-state/dimensions";
 import workers from "./workers/workers.js";
 import { uniqueId } from "lodash";
+import global from "../../global";
+import plot_types from "./data/plot_types";
 
 /**
  * Create a new chart
@@ -81,6 +83,17 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
       }
 
       render(() => <App $chart={this} />, this.element);
+
+      // TEMP add
+      for (const source in global.sources) {
+        for (const name in global.sources[source]) {
+          // Add a plot for each set
+          const plot = this.createDataModelGroup({ source, name });
+
+          // Add indicator for each
+          this.addIndicator(plot_types.bases.line, plot, "price", {});
+        }
+      }
     }
 
     // On master fire resize
@@ -168,12 +181,9 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
 
     const indicators = this.state.indicators.get();
     const yRanges = this.state.ranges.y.get();
+    const timeframe = this.state.timeframe.get();
 
-    const timestamps = utils.getAllTimestampsIn(
-      start,
-      end,
-      this.state.timeframe.get()
-    );
+    const timestamps = utils.getAllTimestampsIn(start, end, timeframe);
 
     // Loop through all layers
     for (const layerId in yRanges) {
@@ -269,7 +279,16 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
 
       min = Math.min.apply(this, minsAndMaxs);
       max = Math.max.apply(this, minsAndMaxs);
+
+      yRanges[layerId].set(v => {
+        v.range = { min, max };
+        return { ...v };
+      });
     }
+
+    this.state.pixelsPerElement.set(
+      this.dimensions.main.width.get() / ((end - start) / timeframe)
+    );
 
     /// OLD CODE BEYOND
 
@@ -518,7 +537,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
       lockedYScale: true,
       visible: true,
       fullscreen: false,
-      scaleType: "default",
+      scaleType: "percent",
       indicatorIds: [],
       range: { min: Infinity, max: -Infinity },
     });

@@ -27,15 +27,15 @@
       };
 
       async function getDatasetsFromBinance() {
-        const res = await fetch("https://www.binance.com/api/v3/exchangeInfo");
+        const res = await fetch("http://localhost:3000/symbols");
         const json = await res.json();
 
         const datasets = {};
 
-        for (const item of json.symbols) {
-          datasets[item.symbol] = {
+        for (const item of json) {
+          datasets[item] = {
             source: "BINANCE",
-            name: item.symbol,
+            name: item,
             modelIds: ["price"],
           };
         }
@@ -48,36 +48,34 @@
         sources,
         dataModels,
         requestData: async ({ source, name, timeframe, modelId, start, end }) => {
-          if (source === "BINANCE") {
-            const tf = {
-              60000: "1m",
-              [60000 * 5]: "5m",
-              [60000 * 15]: "15m",
-              [60000 * 60]: "1h",
-              [60000 * 60 * 4]: "4h",
-              [60000 * 60 * 24]: "1d",
-            }[timeframe];
+          const tf = {
+            60000: "1m",
+            [60000 * 5]: "5m",
+            [60000 * 15]: "15m",
+            [60000 * 60]: "1h",
+            [60000 * 60 * 4]: "4h",
+            [60000 * 60 * 24]: "1d",
+          }[timeframe];
 
-            const res = await fetch(
-              `https://www.binance.com/api/v3/klines?symbol=${name}&interval=${tf}&startTime=${start}&endTime=${end}`
-            );
-            const json = await res.json();
+          const res = await fetch(
+            `http://localhost:3000/symbol?symbol=${name}`
+          );
+          const json = await res.json();
 
-            const data = {};
+          const data = {};
 
-            for (const item of json) {
-              const [timestamp, open, high, low, close] = item;
+          for (const item of json.data) {
+            const [timestamp, open, high, low, close] = item;
 
-              data[timestamp] = {
-                open: +open,
-                high: +high,
-                low: +low,
-                close: +close,
-              };
-            }
-
-            return data;
+            data[timestamp] = {
+              open: +open,
+              high: +high,
+              low: +low,
+              close: +close,
+            };
           }
+
+          return data;
         },
       })
     </script>

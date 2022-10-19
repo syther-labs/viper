@@ -1,3 +1,4 @@
+import { throttle } from "lodash";
 import REGL from "regl";
 import { onCleanup } from "solid-js";
 import { onMount } from "solid-js";
@@ -9,6 +10,35 @@ export default function ViperCanvas(props) {
 
   let canvasEl;
   let RE;
+
+  let change = { x: 0, y: 0 };
+  let layerToMove = undefined;
+
+  const throttleSetVisibleRange = throttle(() => {
+    const layers = $chart.dimensions.main.layers.get();
+
+    let { start, end } = $chart.state.ranges.x.get();
+    const layer = $chart.state.ranges.y.get()[layerToMove].get();
+    if (!layer) return;
+    let { min, max } = layer.range;
+
+    // Get how many candles moved
+    const candlesMoved = change.x / $chart.state.pixelsPerElement.get();
+    const timeMoved = $chart.state.timeframe.get() * candlesMoved;
+
+    start -= timeMoved;
+    end -= timeMoved;
+
+    if (!layer.lockedYScale) {
+      const pixelsPerTick = layers[layerToMove].height / (max - min);
+      const priceMoved = y / pixelsPerTick;
+      min += priceMoved;
+      max += priceMoved;
+    }
+
+    $chart.setVisibleRange({ start, end, min, max }, layerToMove);
+    change = { x: 0, y: 0 };
+  }, 50);
 
   function onMouseDown(e) {
     window.addEventListener("mouseup", onMouseUp);
@@ -23,31 +53,14 @@ export default function ViperCanvas(props) {
   function onDragToResize(e) {
     const { movementX: x, movementY: y, layerY } = e;
 
-    change = { x: 0, y: 0 };
-
-    const layerToMove = $chart.getLayerByYCoord(layerY);
-    const layers = $chart.dimensions.main.layers.get();
-
-    let { start, end } = $chart.state.ranges.x.get();
-    const layer = $chart.state.ranges.y.get()[layerToMove].get();
-    if (!layer) return;
-    let { min, max } = layer.range;
-
-    // Get how many candles moved
-    const candlesMoved = x / $chart.state.pixelsPerElement.get();
-    const timeMoved = $chart.state.timeframe.get() * candlesMoved;
-
-    start -= timeMoved;
-    end -= timeMoved;
-
-    if (!layer.lockedYScale) {
-      const pixelsPerTick = layers[layerToMove].height / (max - min);
-      const priceMoved = y / pixelsPerTick;
-      min += priceMoved;
-      max += priceMoved;
+    if (layerToMove === undefined) {
+      layerToMove = $chart.getLayerByYCoord(layerY);
     }
 
-    $chart.setVisibleRange({ start, end, min, max }, layerToMove);
+    change.x += x;
+    change.y += y;
+
+    throttleSetVisibleRange();
   }
 
   function onWheel(e) {
