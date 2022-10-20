@@ -2,8 +2,6 @@ import utils from "../utils";
 import constants from "../constants";
 
 export function TimeScales(pixelsPerElement, timeframe, start, end, width) {
-  const perf = performance.now();
-
   const scales = [];
 
   const minPixels = 100;
@@ -59,8 +57,6 @@ export function TimeScales(pixelsPerElement, timeframe, start, end, width) {
 
     scales.push([getX(time), text]);
   }
-
-  console.log(performance.now() - perf);
 
   return scales;
 }

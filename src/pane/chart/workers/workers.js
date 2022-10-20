@@ -119,6 +119,8 @@ export default ({ $chart }) => ({
 
     switch (id) {
       case "updateSet":
+        $chart.sets[data.setId].times = data.times;
+        $chart.sets[data.setId].configs = data.configs;
         $chart.sets[data.setId].data = data.data;
         $chart.setVisibleRange({});
         break;

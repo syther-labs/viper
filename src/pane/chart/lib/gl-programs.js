@@ -16,13 +16,15 @@ export function LineProgram(regl) {
       uniform mat4 projection;
   
       attribute vec2 position;
-      attribute vec2 pointA;
-      attribute vec2 pointB;
+      attribute float timeA;
+      attribute float pointA;
+      attribute float timeB;
+      attribute float pointB;
   
       void main() {
-        vec2 xBasis = pointB - pointA;
+        vec2 xBasis = vec2(timeB, pointB) - vec2(timeA, pointA);
         vec2 yBasis = normalize(vec2(-xBasis.y, xBasis.x));
-        vec2 point = pointA + xBasis * position.x + yBasis * width * position.y;
+        vec2 point = vec2(timeA, pointA) + xBasis * position.x + yBasis * width * position.y;
         gl_Position = projection * vec4(point, 0, 1);
       }`,
 
@@ -40,17 +42,29 @@ export function LineProgram(regl) {
         buffer: regl.buffer(segments),
         divisor: 0,
       },
+      timeA: {
+        buffer: regl.prop("times"),
+        divisor: 1,
+        offset: Float32Array.BYTES_PER_ELEMENT * 0,
+        stride: Float32Array.BYTES_PER_ELEMENT * 1,
+      },
       pointA: {
         buffer: regl.prop("points"),
         divisor: 1,
         offset: Float32Array.BYTES_PER_ELEMENT * 0,
-        stride: Float32Array.BYTES_PER_ELEMENT * 2,
+        stride: Float32Array.BYTES_PER_ELEMENT * 1,
+      },
+      timeB: {
+        buffer: regl.prop("times"),
+        divisor: 1,
+        offset: Float32Array.BYTES_PER_ELEMENT * 1,
+        stride: Float32Array.BYTES_PER_ELEMENT * 1,
       },
       pointB: {
         buffer: regl.prop("points"),
         divisor: 1,
-        offset: Float32Array.BYTES_PER_ELEMENT * 2,
-        stride: Float32Array.BYTES_PER_ELEMENT * 2,
+        offset: Float32Array.BYTES_PER_ELEMENT * 1,
+        stride: Float32Array.BYTES_PER_ELEMENT * 1,
       },
     },
 

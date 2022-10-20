@@ -5,11 +5,12 @@ const bases = {
     dependencies: ["value"],
     draw({ value, plot }) {
       plot({
+        id: "line",
         value,
         title: "Line",
         color: this.color,
-        linewidth: 2,
-        ylabel: true,
+        lineWidth: 2,
+        yLabel: true,
       });
     },
   },

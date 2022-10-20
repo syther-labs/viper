@@ -8,7 +8,7 @@ import { v } from "../../api/api";
 
 import dimensions from "./local-state/dimensions";
 import workers from "./workers/workers.js";
-import { uniqueId } from "lodash";
+import { set, uniqueId } from "lodash";
 import global from "../../global";
 import plot_types from "./data/plot_types";
 import { TimeScales } from "./workers/generators";
@@ -63,7 +63,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
 
   scales: {
     time: v([]),
-    price: v([]),
+    price: v({}),
   },
 
   /**
@@ -97,9 +97,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
           const plot = this.createDataModelGroup({ source, name });
 
           // Add indicator for each
-          this.addIndicator(plot_types.bases.candlestick, plot, "price", {});
-
-          return;
+          this.addIndicator(plot_types.bases.line, plot, "price", {});
         }
       }
     }
@@ -194,17 +192,14 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     const yRanges = this.state.ranges.y.get();
     const timeframe = this.state.timeframe.get();
 
-    const timestamps = utils.getAllTimestampsIn(start, end, timeframe);
+    // const timestamps = utils.getAllTimestampsIn(start, end, timeframe);
 
     // Loop through all layers
     for (const layerId in yRanges) {
       const { scaleType, indicatorIds } = yRanges[layerId].get();
 
       // Loop through all sets and update data buffers with updated data
-      const inView = [];
       const minsAndMaxs = [];
-
-      let i = 0;
 
       // Loop through all indicators in layer
       for (const indicatorId of indicatorIds) {
@@ -213,79 +208,31 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
 
         if (!visible) continue;
 
-        inView[i] = [];
-        const plots = [];
+        // TODO get array of only times in viewport
+        set.buffers.times(set.times);
 
-        let first = undefined;
+        for (const id in set.configs) {
+          const config = set.configs[id];
+          const data = set.data[id];
 
-        let missingPoints = [];
-
-        // Loop through each time
-        for (const timestamp of timestamps) {
-          // If no data or never attempted to load data at time
-          if (set.data[timestamp] === undefined) {
-            missingPoints.push(timestamp);
-            continue;
+          if (!set.buffers.data[id]) {
+            set.buffers.data[id] = {
+              config,
+              length: 0,
+              buffer: this.regl.buffer([]),
+            };
           }
 
-          // If data has already been attempted to be loaded
-          if (set.data[timestamp] === null) continue;
+          set.buffers.data[id].length = data.length;
+          set.buffers.data[id].buffer(data);
 
-          let j = 0;
-          for (const { type, values } of set.data[timestamp]) {
-            if (first === undefined) first = values.series[0];
+          const min = Math.min.apply(this, data);
+          const max = Math.max.apply(this, data);
+          minsAndMaxs.push(min, max);
 
-            if (!inView[i][j]) inView[i][j] = { type: "", values: [] };
-
-            // Add timestamp to data
-            inView[i][j].values.push(timestamp);
-
-            for (let value of values.series) {
-              if (scaleType === "percent") {
-                value = ((value - first) / Math.abs(first)) * 100;
-              }
-
-              inView[i][j].type = type;
-              inView[i][j].values.push(value);
-              plots.push(value);
-            }
-
-            j++;
-          }
+          set.min = min;
+          set.max = max;
         }
-
-        // If missing data points from set, request them from parent
-        // if (missingPoints.length) {
-        //   // Request data from master
-        //   this.$api.getDataPoints({
-        //     source,
-        //     name,
-        //     timeframe: this.state.timeframe.get(),
-        //     modelId: model,
-        //     start: Math.min.apply(this, missingPoints),
-        //     end: Math.max.apply(this, missingPoints),
-        //   });
-        // }
-
-        const min = Math.min.apply(this, plots);
-        const max = Math.max.apply(this, plots);
-        minsAndMaxs.push(min, max);
-
-        set.min = min;
-        set.max = max;
-
-        for (let j = 0; j < inView[i].length; j++) {
-          const { type, values } = inView[i][j];
-
-          if (!set.buffers[j]) {
-            set.buffers[j] = { type, length: 0, buffer: this.regl.buffer([]) };
-          }
-
-          set.buffers[j].length = values.length;
-          set.buffers[j].buffer(values);
-        }
-
-        i++;
       }
 
       min = Math.min.apply(this, minsAndMaxs);
@@ -439,8 +386,15 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     this.sets[setId] = {
       min: Infinity,
       max: -Infinity,
+
+      times: [],
+      configs: {},
       data: {},
-      buffers: [],
+
+      buffers: {
+        times: this.regl.buffer([]),
+        data: {},
+      },
     };
 
     this.state.indicators.set(v => ({
@@ -557,7 +511,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
       lockedYScale: true,
       visible: true,
       fullscreen: false,
-      scaleType: "default",
+      scaleType: "normalized",
       indicatorIds: [],
       range: { min: Infinity, max: -Infinity },
     });

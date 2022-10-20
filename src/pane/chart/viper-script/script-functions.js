@@ -2,16 +2,17 @@ import math from "./math.js";
 
 export default {
   plot(
-    { addSetItem, time },
-    { value, title, color = "#FFF", linewidth, ylabel = false }
+    { set, addSetItem, time },
+    { id, value, title, color = "#FFF", lineWidth, yLabel = false }
   ) {
-    addSetItem(time, "line", {
-      series: [value],
-      title,
+    set.configs[id] = {
+      type: "line",
       colors: { color },
-      linewidth,
-      ylabel,
-    });
+      title,
+      lineWidth,
+      yLabel,
+    };
+    addSetItem(id, time, [value]);
   },
 
   fill({ addSetItem, time }, { value1, value2, color = "#FFF" }) {
@@ -167,7 +168,7 @@ export default {
     set.addLookback(Infinity);
     const lookback = (time - dataset.minTime) / timeframe;
     const points = this.getDataArray(arguments[0], { source, lookback }).filter(
-      (v) => !isNaN(v) && typeof v === "number"
+      v => !isNaN(v) && typeof v === "number"
     );
 
     return points;
@@ -183,7 +184,7 @@ export default {
     const points = this.getDataArray(arguments[0], {
       lookback: length,
       source,
-    }).filter((v) => !isNaN(v) && typeof v === "number");
+    }).filter(v => !isNaN(v) && typeof v === "number");
 
     const basis = math.mean(points);
     const dev = math.times(math.stdev(points, basis), multiplier);

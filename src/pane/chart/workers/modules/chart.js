@@ -105,26 +105,37 @@ const methods = {
     // Storage for global variables used across indicator times only defined once
     const globals = {};
 
-    const addSetItem = (time, type, values) => {
+    const addSetItem = (id, time, values) => {
       // If any of the values are not a number, (invalid calculation, ignore them)
-      if (values.series.filter(e => isNaN(e) || typeof e !== "number").length) {
+      if (values.filter(e => isNaN(e) || typeof e !== "number").length) {
         return;
       }
 
-      // If first plotted item at time, create fresh array
-      if (!set.data[time]) {
-        set.data[time] = [];
+      // If first plotted item for set at id
+      if (!set.data[id]) {
+        set.data[id] = [];
       }
 
-      // Add plot type and plot values to time
-      set.data[time].push({ type, values });
+      // Get index of time ahead of this point
+      let i = set.times.indexOf(time + set.timeframe);
+
+      // If time is not in array, add to start or end
+      if (i === -1) {
+        if (time < set.times[0]) i = 0;
+        else if (time > set.times[set.times.length - 1]) {
+          i = set.times.length;
+        }
+      }
+
+      // Apply new data to arrays
+      set.times.splice(i, 0, time);
+      set.data[id].splice(i * values.length, 0, ...values);
 
       // Update max & min if applicable
-      const { series } = values;
-      for (const val of series) {
+      for (const value of values) {
         // If potential for more decimal places, check
         if (set.decimalPlaces < 8) {
-          const decimalPlaces = utils.getDecimalPlaces(val, 8);
+          const decimalPlaces = utils.getDecimalPlaces(value, 8);
 
           // If decimal places for number is larger, set max decimal places
           if (decimalPlaces > set.decimalPlaces) {
@@ -165,7 +176,8 @@ const methods = {
       iteratedTime = timestamp;
 
       // If item exists at iterated time, delete it
-      delete set.data[iteratedTime];
+      // TODO FIX
+      // delete set.data[iteratedTime];
 
       let data = dataset.data[iteratedTime];
       if (data === undefined || data === null) continue;
@@ -192,6 +204,8 @@ const methods = {
       id: "updateSet",
       data: {
         setId,
+        times: set.times,
+        configs: set.configs,
         data: set.data,
       },
     });
@@ -200,7 +214,10 @@ const methods = {
 
 function createComputedSet({ timeframe }) {
   return {
+    configs: {},
+    times: [],
     data: {},
+
     timeframe,
     visibleMin: Infinity,
     visibleMax: -Infinity,

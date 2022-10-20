@@ -84,10 +84,13 @@ export default class RenderingEngine {
         );
 
         // Loop through all buffers
-        for (const { type, buffer, length } of set.buffers) {
-          switch (type) {
+        for (const id in set.buffers.data) {
+          const { config, buffer, length } = set.buffers.data[id];
+
+          switch (config.type) {
             case "line":
               this.programs.line({
+                times: set.buffers.times,
                 points: buffer,
                 width: (max - min) / 500,
                 color: datastore.colors[i],
