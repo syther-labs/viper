@@ -11,6 +11,7 @@ import workers from "./workers/workers.js";
 import { uniqueId } from "lodash";
 import global from "../../global";
 import plot_types from "./data/plot_types";
+import { TimeScales } from "./workers/generators";
 
 /**
  * Create a new chart
@@ -60,6 +61,11 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
   sets: {},
   regl: null,
 
+  scales: {
+    time: v([]),
+    price: v([]),
+  },
+
   /**
    * On parent emitted events
    * @param {("resize","mounted")} event
@@ -91,7 +97,9 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
           const plot = this.createDataModelGroup({ source, name });
 
           // Add indicator for each
-          this.addIndicator(plot_types.bases.line, plot, "price", {});
+          this.addIndicator(plot_types.bases.candlestick, plot, "price", {});
+
+          return;
         }
       }
     }
@@ -155,6 +163,9 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     layerId = Object.keys(this.state.ranges.y.get())[0]
   ) {
     if (this.regl === null) return;
+
+    const width = this.dimensions.main.width.get();
+    const height = this.dimensions.main.height.get();
 
     const xRange = this.state.ranges.x.get();
     const yRange = this.state.ranges.y.get()[layerId].get().range;
@@ -286,8 +297,17 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
       });
     }
 
-    this.state.pixelsPerElement.set(
-      this.dimensions.main.width.get() / ((end - start) / timeframe)
+    this.state.pixelsPerElement.set(width / ((end - start) / timeframe));
+
+    // Regenerate TimeScales and PriceScales
+    this.scales.time.set(
+      TimeScales(
+        this.state.pixelsPerElement.get(),
+        timeframe,
+        start,
+        end,
+        width
+      )
     );
 
     /// OLD CODE BEYOND
@@ -537,7 +557,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
       lockedYScale: true,
       visible: true,
       fullscreen: false,
-      scaleType: "percent",
+      scaleType: "default",
       indicatorIds: [],
       range: { min: Infinity, max: -Infinity },
     });

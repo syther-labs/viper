@@ -43,74 +43,82 @@ export default class RenderingEngine {
    * This can be used for when user interacts with the window like resizing
    */
   draw() {
-    const width = this.$chart.dimensions.width.get();
-    const height = this.$chart.dimensions.height.get();
+    const width = this.$chart.dimensions.main.width.get();
+    const mainHeight = this.$chart.dimensions.main.height.get();
     const timeframe = this.$chart.state.timeframe.get();
-
-    const viewport = { x: 0, y: 0, width, height };
 
     let i = 0;
 
-    this.programs.background({ viewport });
+    this.programs.background();
 
-    for (const setId in this.$chart.sets) {
-      const set = this.$chart.sets[setId];
+    // Loop through each layer
+    for (const layer of Object.values(this.$chart.state.ranges.y.get())) {
+      const { id, scaleType, range, indicatorIds } = layer.get();
+      const { top, height } = this.$chart.dimensions.main.layers.get()[id];
 
-      // Get indicator
-      const { layerId } = this.$chart.state.indicators.get()[setId].get();
+      const viewport = { x: 0, y: mainHeight - (top + height), width, height };
 
-      // Get layer
-      const layer = this.$chart.state.ranges.y.get()[layerId].get();
+      for (const setId of indicatorIds) {
+        const set = this.$chart.sets[setId];
 
-      let { min, max } = layer.range;
+        let { min, max } = range;
 
-      if (layer.scaleType === "normalized") {
-        min = set.min;
-        max = set.max;
-      }
-
-      const range5P = (max - min) * 0.05;
-      min -= range5P;
-      max += range5P;
-
-      const { start, end } = this.$chart.state.ranges.x.get();
-      const projection = mat4.ortho(mat4.create(), start, end, min, max, 0, -1);
-
-      // Loop through all buffers
-      for (const { type, buffer, length } of set.buffers) {
-        switch (type) {
-          case "line":
-            this.programs.line({
-              points: buffer,
-              width: (max - min) / 500,
-              color: datastore.colors[i],
-              projection,
-              viewport,
-              segments: length / 2 - 2,
-            });
-            break;
-          case "candle":
-            this.programs.candlestick({
-              points: buffer,
-              color: datastore.colors[i],
-              projection,
-              viewport,
-              timeframe,
-              segments: length / 5,
-            });
-            this.programs.candlebody({
-              points: buffer,
-              color: datastore.colors[i],
-              projection,
-              viewport,
-              timeframe,
-              segments: length / 5,
-            });
-            break;
+        if (scaleType === "normalized") {
+          min = set.min;
+          max = set.max;
         }
-      }
 
-      i++;
+        const range5P = (max - min) * 0.05;
+        min -= range5P;
+        max += range5P;
+
+        const { start, end } = this.$chart.state.ranges.x.get();
+        const projection = mat4.ortho(
+          mat4.create(),
+          start,
+          end,
+          min,
+          max,
+          0,
+          -1
+        );
+
+        // Loop through all buffers
+        for (const { type, buffer, length } of set.buffers) {
+          switch (type) {
+            case "line":
+              this.programs.line({
+                points: buffer,
+                width: (max - min) / 500,
+                color: datastore.colors[i],
+                projection,
+                viewport,
+                segments: length / 2 - 2,
+              });
+              break;
+            case "candle":
+              this.programs.candlestick({
+                points: buffer,
+                color: datastore.colors[i],
+                projection,
+                viewport,
+                timeframe,
+                segments: length / 5,
+              });
+              this.programs.candlebody({
+                points: buffer,
+                color: datastore.colors[i],
+                projection,
+                viewport,
+                timeframe,
+                segments: length / 5,
+              });
+              break;
+          }
+        }
+
+        i++;
+      }
     }
   }
 

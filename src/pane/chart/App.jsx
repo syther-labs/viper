@@ -1,10 +1,15 @@
 import ViperCanvas from "./components/Chart/ViperCanvas";
 import Overlay from "./components/overlay/Overlay";
 
+import TimeScale from "./components/Chart/TimeScale";
+import PriceScale from "./components/Chart/PriceScale";
+
 function App({ $chart }) {
   return (
     <div className="relative overflow-hidden h-full w-full bg-black text-gray-100">
       <ViperCanvas $chart={$chart} />
+      <TimeScale $chart={$chart} />
+      <PriceScale $chart={$chart} />
       <div className="absolute p-4">
         <Overlay $chart={$chart} />
       </div>

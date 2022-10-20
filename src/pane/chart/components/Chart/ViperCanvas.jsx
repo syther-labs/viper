@@ -1,9 +1,7 @@
-import { throttle } from "lodash";
 import REGL from "regl";
 import { onCleanup } from "solid-js";
 import { onMount } from "solid-js";
 import RenderingEngine from "../../lib/rendering-engine";
-import utils from "../../utils";
 
 export default function ViperCanvas(props) {
   const { $chart, type, height, width } = props;
@@ -14,7 +12,26 @@ export default function ViperCanvas(props) {
   let change = { x: 0, y: 0 };
   let layerToMove = undefined;
 
-  const throttleSetVisibleRange = throttle(() => {
+  function onMouseDown(e) {
+    window.addEventListener("mouseup", onMouseUp);
+    window.addEventListener("mousemove", onDragToResize);
+  }
+
+  function onMouseUp(e) {
+    window.removeEventListener("mouseup", onMouseUp);
+    window.removeEventListener("mousemove", onDragToResize);
+  }
+
+  function onDragToResize(e) {
+    const { movementX: x, movementY: y, layerY } = e;
+
+    if (layerToMove === undefined) {
+      layerToMove = $chart.getLayerByYCoord(layerY);
+    }
+
+    change.x += x;
+    change.y += y;
+
     const layers = $chart.dimensions.main.layers.get();
 
     let { start, end } = $chart.state.ranges.x.get();
@@ -38,29 +55,6 @@ export default function ViperCanvas(props) {
 
     $chart.setVisibleRange({ start, end, min, max }, layerToMove);
     change = { x: 0, y: 0 };
-  }, 50);
-
-  function onMouseDown(e) {
-    window.addEventListener("mouseup", onMouseUp);
-    window.addEventListener("mousemove", onDragToResize);
-  }
-
-  function onMouseUp(e) {
-    window.removeEventListener("mouseup", onMouseUp);
-    window.removeEventListener("mousemove", onDragToResize);
-  }
-
-  function onDragToResize(e) {
-    const { movementX: x, movementY: y, layerY } = e;
-
-    if (layerToMove === undefined) {
-      layerToMove = $chart.getLayerByYCoord(layerY);
-    }
-
-    change.x += x;
-    change.y += y;
-
-    throttleSetVisibleRange();
   }
 
   function onWheel(e) {
@@ -164,9 +158,14 @@ export default function ViperCanvas(props) {
       onWheel={onWheel}
       on:dblclick={onDoubleClick}
       ref={canvasEl}
-      height={$chart.dimensions.height.get()}
-      width={$chart.dimensions.width.get()}
-      className="w-full h-full"
+      height={$chart.dimensions.main.height.get()}
+      width={$chart.dimensions.main.width.get()}
+      style={{
+        height: `${$chart.dimensions.main.height.get()}px`,
+        width: `${$chart.dimensions.main.width.get()}px`,
+      }}
+      className="w-full h-full cursor-crosshair"
+      context-menu-id="main"
     />
   );
 }

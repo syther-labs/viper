@@ -82,7 +82,7 @@ export function BackgroundProgram(regl) {
 
     frag: `
       void main() {
-        gl_FragColor = vec4(9 / 255, 1 / 255, 27 / 255, 1);
+        gl_FragColor = vec4(0.05, 0.05, 0.05, 1);
       }
     `,
 

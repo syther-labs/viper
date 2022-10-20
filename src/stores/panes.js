@@ -17,7 +17,7 @@ export const gridEdit = v(false);
 export function createPane(Pane) {
   const id = uniqueId();
 
-  const gridItem = grid.addWidget({ w: 6, h: 4 });
+  const gridItem = grid.addWidget({ w: 12, h: 8 });
   const element = gridItem.querySelector(".grid-stack-item-content");
   gridItem.addEventListener("click", () => activePaneId.set(id));
 

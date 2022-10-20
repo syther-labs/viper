@@ -1,16 +1,5 @@
-import ViperCanvas from "./ViperCanvas";
-
-import { createSimpleEmitter } from "@solid-primitives/event-bus";
-
-export default function yScale({ $chart }) {
-  const [listen, emit] = createSimpleEmitter();
-
+export default function PriceScale({ $chart }) {
   let layerToMove;
-
-  listen((eventId, e) => {
-    if (eventId === "onDoubleClick") onDoubleClick(e);
-    if (eventId === "onDragToResize") onDragToResize(e);
-  });
 
   function onDoubleClick(e) {
     const layerId = $chart.getLayerByYCoord(e.clientY);
@@ -44,21 +33,17 @@ export default function yScale({ $chart }) {
 
   return (
     <div
-      className="absolute cursor-ns-resize"
+      className="absolute cursor-ns-resize border-l-1 border-b-1 border-z-8"
       style={{
         left: `${$chart.dimensions.main.width.get()}px`,
         top: 0,
         width: `${$chart.dimensions.yScale.width.get()}px`,
         height: `${$chart.dimensions.yScale.height.get()}px`,
+        background: "rgba(10,10,10,1)",
       }}
       context-menu-id="yScale"
-    >
-      <ViperCanvas
-        emit={emit}
-        {...$chart.dimensions.yScale}
-        $chart={$chart}
-        type="yScale"
-      />
-    </div>
+      on:dblclick={onDoubleClick}
+      onDragToResize={onDragToResize}
+    />
   );
 }
