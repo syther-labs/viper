@@ -96,7 +96,7 @@ export default class RenderingEngine {
                 color: datastore.colors[i],
                 projection,
                 viewport,
-                segments: length / 2 - 2,
+                segments: length - 1,
               });
               break;
             case "candle":

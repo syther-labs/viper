@@ -192,7 +192,8 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     const yRanges = this.state.ranges.y.get();
     const timeframe = this.state.timeframe.get();
 
-    // const timestamps = utils.getAllTimestampsIn(start, end, timeframe);
+    const minTime = start - (start % timeframe);
+    const maxTime = end + timeframe - (end % timeframe);
 
     // Loop through all layers
     for (const layerId in yRanges) {
@@ -208,12 +209,19 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
 
         if (!visible) continue;
 
-        // TODO get array of only times in viewport
-        set.buffers.times(set.times);
+        let i = Math.max(set.times.indexOf(minTime), 0);
+        let j = set.times.indexOf(maxTime);
+
+        if (j === -1) j = set.times.length - 1;
+
+        // Set times to array of times in viewport
+        set.buffers.times(set.times.slice(i, j + 1));
 
         for (const id in set.configs) {
           const config = set.configs[id];
-          const data = set.data[id];
+
+          const l = config.length;
+          const data = set.data[id].slice(i * l, j * l + 1);
 
           if (!set.buffers.data[id]) {
             set.buffers.data[id] = {

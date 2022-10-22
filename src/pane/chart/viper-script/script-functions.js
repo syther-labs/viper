@@ -9,6 +9,7 @@ export default {
       type: "line",
       colors: { color },
       title,
+      length: 1,
       lineWidth,
       yLabel,
     };
