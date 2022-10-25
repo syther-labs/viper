@@ -11,6 +11,16 @@ export default function PriceScale({ $chart }) {
     }
   }
 
+  function onMouseDown(e) {
+    window.addEventListener("mouseup", onMouseUp);
+    window.addEventListener("mousemove", onDragToResize);
+  }
+
+  function onMouseUp(e) {
+    window.removeEventListener("mouseup", onMouseUp);
+    window.removeEventListener("mousemove", onDragToResize);
+  }
+
   function onDragToResize({ movementY, layerY }) {
     if (movementY === 0) return;
 
@@ -43,7 +53,7 @@ export default function PriceScale({ $chart }) {
       }}
       context-menu-id="yScale"
       on:dblclick={onDoubleClick}
-      onDragToResize={onDragToResize}
+      onMouseDown={onMouseDown}
     />
   );
 }

@@ -165,8 +165,9 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     const width = this.dimensions.main.width.get();
     const height = this.dimensions.main.height.get();
 
+    const layer = this.state.ranges.y.get()[layerId].get();
     const xRange = this.state.ranges.x.get();
-    const yRange = this.state.ranges.y.get()[layerId].get().range;
+    const yRange = layer.range;
 
     let {
       start = xRange.start,
@@ -196,8 +197,8 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     const maxTime = end + timeframe - (end % timeframe);
 
     // Loop through all layers
-    for (const layerId in yRanges) {
-      const { scaleType, indicatorIds } = yRanges[layerId].get();
+    for (const id in yRanges) {
+      const { scaleType, lockedYScale, indicatorIds } = yRanges[id].get();
 
       // Loop through all sets and update data buffers with updated data
       const minsAndMaxs = [];
@@ -217,12 +218,18 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
         // Set times to array of times in viewport
         set.buffers.times(set.times.slice(i, j + 1));
 
+        // Clear the first point in set
+        set.first = undefined;
+
         for (const id in set.configs) {
           const config = set.configs[id];
 
           const l = config.length;
           const data = set.data[id].slice(i * l, j * l + 1);
 
+          if (set.first === undefined) set.first = data[0];
+
+          // If no buffer exists for this set config, create it
           if (!set.buffers.data[id]) {
             set.buffers.data[id] = {
               config,
@@ -234,22 +241,41 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
           set.buffers.data[id].length = data.length;
           set.buffers.data[id].buffer(data);
 
-          const min = Math.min.apply(this, data);
-          const max = Math.max.apply(this, data);
-          minsAndMaxs.push(min, max);
+          // Calcuate set min's and max's + visible min's and max'x
+          set.min = Math.min.apply(this, data);
+          set.max = Math.max.apply(this, data);
 
-          set.min = min;
-          set.max = max;
+          let visibleMin = set.min;
+          let visibleMax = set.max;
+
+          if (scaleType === 2) {
+            visibleMin = 0;
+            visibleMax = 100;
+          } else if (scaleType === 1) {
+            visibleMin = ((set.min - set.first) / Math.abs(set.first)) * 100;
+            visibleMax = ((set.max - set.first) / Math.abs(set.first)) * 100;
+          }
+
+          set.visibleMin = visibleMin;
+          set.visibleMax = visibleMax;
+          minsAndMaxs.push(visibleMin, visibleMax);
         }
       }
 
-      min = Math.min.apply(this, minsAndMaxs);
-      max = Math.max.apply(this, minsAndMaxs);
+      // If yScale is locked, apply min and max bounds
+      if (lockedYScale) {
+        let min = Math.min.apply(this, minsAndMaxs);
+        let max = Math.max.apply(this, minsAndMaxs);
 
-      yRanges[layerId].set(v => {
-        v.range = { min, max };
-        return { ...v };
-      });
+        const range5P = (max - min) * 0.05;
+        min -= range5P;
+        max += range5P;
+
+        yRanges[id].set(v => {
+          v.range = { min, max };
+          return { ...v };
+        });
+      }
     }
 
     this.state.pixelsPerElement.set(width / ((end - start) / timeframe));
@@ -519,7 +545,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
       lockedYScale: true,
       visible: true,
       fullscreen: false,
-      scaleType: "normalized",
+      scaleType: 1,
       indicatorIds: [],
       range: { min: Infinity, max: -Infinity },
     });

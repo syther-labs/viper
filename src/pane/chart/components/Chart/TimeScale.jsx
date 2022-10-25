@@ -13,6 +13,16 @@ export default function TimeScale({ $chart }) {
     $chart.resizeXRange(change);
   }
 
+  function onMouseDown(e) {
+    window.addEventListener("mouseup", onMouseUp);
+    window.addEventListener("mousemove", onDragToResize);
+  }
+
+  function onMouseUp(e) {
+    window.removeEventListener("mouseup", onMouseUp);
+    window.removeEventListener("mousemove", onDragToResize);
+  }
+
   return (
     <div
       className="absolute cursor-ew-resize border-t-1 border-r-1 border-z-8"
@@ -25,7 +35,7 @@ export default function TimeScale({ $chart }) {
       }}
       context-menu-id="xScale"
       on:dblclick={onDoubleClick}
-      onDragToResize={onDragToResize}
+      onMouseDown={onMouseDown}
     >
       <div className="relative w-full h-full overflow-hidden">
         <For each={$chart.scales.time.get()}>

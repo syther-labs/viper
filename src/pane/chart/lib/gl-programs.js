@@ -14,6 +14,10 @@ export function LineProgram(regl) {
   
       uniform float width;
       uniform mat4 projection;
+      uniform int scaleType;
+      uniform float setFirst;
+      uniform float setMin;
+      uniform float setMax;
   
       attribute vec2 position;
       attribute float timeA;
@@ -22,9 +26,21 @@ export function LineProgram(regl) {
       attribute float pointB;
   
       void main() {
-        vec2 xBasis = vec2(timeB, pointB) - vec2(timeA, pointA);
+        float pA = pointA;
+        float pB = pointB;
+
+        if (scaleType == 1) {
+          pA = ((pointA - setFirst) / abs(setFirst)) * 100.0;
+          pB = ((pointB - setFirst) / abs(setFirst)) * 100.0;
+        }
+        else if (scaleType == 2) {
+          pA = (pointA - setMin) / (setMax - setMin) * 100.0;
+          pB = (pointB - setMin) / (setMax - setMin) * 100.0;
+        }
+
+        vec2 xBasis = vec2(timeB, pB) - vec2(timeA, pA);
         vec2 yBasis = normalize(vec2(-xBasis.y, xBasis.x));
-        vec2 point = vec2(timeA, pointA) + xBasis * position.x + yBasis * width * position.y;
+        vec2 point = vec2(timeA, pA) + xBasis * position.x + yBasis * width * position.y;
         gl_Position = projection * vec4(point, 0, 1);
       }`,
 
@@ -69,6 +85,10 @@ export function LineProgram(regl) {
     },
 
     uniforms: {
+      scaleType: regl.prop("scaleType"),
+      setFirst: regl.prop("setFirst"),
+      setMin: regl.prop("setMin"),
+      setMax: regl.prop("setMax"),
       width: regl.prop("width"),
       color: regl.prop("color"),
       projection: regl.prop("projection"),

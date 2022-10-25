@@ -61,24 +61,13 @@ export default class RenderingEngine {
       for (const setId of indicatorIds) {
         const set = this.$chart.sets[setId];
 
-        let { min, max } = range;
-
-        if (scaleType === "normalized") {
-          min = set.min;
-          max = set.max;
-        }
-
-        const range5P = (max - min) * 0.05;
-        min -= range5P;
-        max += range5P;
-
         const { start, end } = this.$chart.state.ranges.x.get();
         const projection = mat4.ortho(
           mat4.create(),
           start,
           end,
-          min,
-          max,
+          range.min,
+          range.max,
           0,
           -1
         );
@@ -92,8 +81,15 @@ export default class RenderingEngine {
               this.programs.line({
                 times: set.buffers.times,
                 points: buffer,
-                width: (max - min) / 500,
+
+                scaleType,
+                setFirst: set.first,
+                setMin: set.min,
+                setMax: set.max,
+
+                width: (range.max - range.min) / 500,
                 color: datastore.colors[i],
+
                 projection,
                 viewport,
                 segments: length - 1,

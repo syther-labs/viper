@@ -7,10 +7,10 @@ export default {
       plotValue(set, type, series, timestamps, scaleType) {
         let value = series[{ line: 0, candle: 3 }[type]];
 
-        if (scaleType === "percent") {
+        if (scaleType === 1) {
           const first = Calculations.getFirstValue(set, timestamps);
           value = (((value - first) / Math.abs(first)) * 100).toFixed(2);
-        } else if (scaleType === "normalized") {
+        } else if (scaleType === 2) {
           value = Utils.toFixed(
             ((value - set.visibleMin) / (set.visibleMax - set.visibleMin)) *
               100,
@@ -24,7 +24,7 @@ export default {
       yScaleText(value, color, scaleType) {
         let text = `${value}`;
 
-        if (scaleType === "percent") {
+        if (scaleType === 1) {
           const a = value >= 0 ? "+" : "";
           text = `${a}${value}%`;
         }
@@ -35,7 +35,7 @@ export default {
 
     scales: {
       scaleText(value, scaleType) {
-        if (scaleType === "percent") {
+        if (scaleType === 1) {
           const a = value >= 0 ? "+" : "";
           return `${a}${value}%`;
         }

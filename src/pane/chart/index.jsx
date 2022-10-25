@@ -29,11 +29,11 @@ export default param0 => ({
 
         // Get the layer
         const layerId = chart.getLayerByYCoord(clientY);
-        const layer = chart.ranges.y.get()[layerId];
+        const layer = chart.state.ranges.y.get()[layerId];
         const { fullscreen } = layer.get();
 
         return {
-          title: chart.name.get(),
+          title: chart.state.name.get(),
           config: [
             {
               type: "list",
@@ -98,11 +98,11 @@ export default param0 => ({
 
         // Get the layer
         const layerId = chart.getLayerByYCoord(clientY);
-        const layer = chart.ranges.y.get()[layerId];
+        const layer = chart.state.ranges.y.get()[layerId];
         const { scaleType } = layer.get();
 
         return {
-          title: chart.name.get(),
+          title: chart.state.name.get(),
           config: [
             {
               type: "list",
@@ -112,24 +112,24 @@ export default param0 => ({
                   type: "button",
                   text: "Default",
                   onClick: () => {
-                    layer.set(v => ({ ...v, scaleType: "default" }));
-                    chart.workers.generateAllInstructions();
+                    layer.set(v => ({ ...v, scaleType: 0 }));
+                    chart.setVisibleRange({});
                   },
                 },
                 {
                   type: "button",
                   text: "Percent",
                   onClick: () => {
-                    layer.set(v => ({ ...v, scaleType: "percent" }));
-                    chart.workers.generateAllInstructions();
+                    layer.set(v => ({ ...v, scaleType: 1 }));
+                    chart.setVisibleRange({});
                   },
                 },
                 {
                   type: "button",
                   text: "Normalized",
                   onClick: () => {
-                    layer.set(v => ({ ...v, scaleType: "normalized" }));
-                    chart.workers.generateAllInstructions();
+                    layer.set(v => ({ ...v, scaleType: 2 }));
+                    chart.setVisibleRange({});
                   },
                 },
               ],

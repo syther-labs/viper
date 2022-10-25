@@ -21,7 +21,7 @@ export function onContextMenu(e) {
   if (e.target === null) return;
 
   /** @type {HTMLElement} */
-  let element = e.target.parentElement;
+  let element = e.target;
 
   let contextMenuId = null;
 

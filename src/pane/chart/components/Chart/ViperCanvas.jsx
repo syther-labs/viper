@@ -82,13 +82,13 @@ export default function ViperCanvas(props) {
     // If vertical scroll
     else if (deltaY !== 0) {
       const layerId = $chart.getLayerByYCoord(offsetY);
-      const layer = $chart.state.ranges.y.get()[layerId].get();
+      const layer = $chart.state.ranges.y.get()[layerId];
       let { start, end } = $chart.state.ranges.x.get();
-      let { min, max } = layer.range;
+      let { min, max } = layer.get().range;
 
       // If zoom on Y axis
       if (e.ctrlKey || e.shiftKey) {
-        layer.lockedYScale = false;
+        layer.set(v => ({ ...v, lockedYScale: false }));
         const { top, height } = $chart.dimensions.main.layers.get()[layerId];
 
         const topP = (offsetY - top) / height;
