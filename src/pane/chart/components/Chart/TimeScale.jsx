@@ -1,4 +1,5 @@
 import { For } from "solid-js";
+import utils from "../../utils";
 
 export default function TimeScale({ $chart }) {
   function onDoubleClick(e) {
@@ -37,9 +38,44 @@ export default function TimeScale({ $chart }) {
       on:dblclick={onDoubleClick}
       onMouseDown={onMouseDown}
     >
-      <div className="relative w-full h-full overflow-hidden">
-        {$chart.scales.time.get()}
+      <div className="relative w-full h-full overflow-hidden select-none">
+        <div>{$chart.scales.time.get()}</div>
+        <div
+          className="absolute px-2 text-z-3 text-xs text-center font-bold bg-z-9 whitespace-nowrap"
+          style={{
+            left: `${$chart.crosshair.get().time[0]}px`,
+            transform: `translateX(-50%)`,
+          }}
+        >
+          {CrosshairTime($chart.crosshair.get().time[1])}
+        </div>
       </div>
     </div>
   );
+}
+
+function CrosshairTime(time) {
+  const d = new Date(time);
+  const { aZ } = utils;
+
+  const day = d.getDate();
+  const mo = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ][d.getMonth()];
+  const y = d.getFullYear();
+  const h = aZ(d.getHours());
+  const m = aZ(d.getMinutes());
+
+  return `${day} ${mo} ${y} ${h}:${m}`;
 }

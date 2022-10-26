@@ -61,7 +61,10 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
   },
   sets: {},
   regl: null,
-
+  crosshair: v({
+    time: [],
+    value: [],
+  }),
   scales: {
     time: v(document.createElement("div")),
     price: v(document.createElement("div")),

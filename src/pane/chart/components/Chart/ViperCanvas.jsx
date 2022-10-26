@@ -2,15 +2,32 @@ import REGL from "regl";
 import { onCleanup } from "solid-js";
 import { onMount } from "solid-js";
 import RenderingEngine from "../../lib/rendering-engine";
+import utils from "../../utils";
 
 export default function ViperCanvas(props) {
-  const { $chart, type, height, width } = props;
+  const { $chart } = props;
 
   let canvasEl;
   let RE;
 
   let change = { x: 0, y: 0 };
   let layerToMove = undefined;
+
+  function onMouseMove(e) {
+    const { offsetY, offsetX } = e;
+
+    // Get the layer moved inside
+    const layerId = $chart.getLayerByYCoord(offsetY);
+    const { start, end } = $chart.state.ranges.x.get();
+    const { min, max } = $chart.state.ranges.y.get()[layerId].get().range;
+    const { height } = $chart.dimensions.main.layers.get()[layerId];
+    const width = $chart.dimensions.main.width.get();
+
+    $chart.crosshair.set({
+      time: [offsetX, utils.getTimestampByXCoord(start, end, width, offsetX)],
+      price: [offsetY, utils.getPriceByYCoord(min, max, height, offsetY)],
+    });
+  }
 
   function onMouseDown(e) {
     window.addEventListener("mouseup", onMouseUp);
@@ -157,6 +174,7 @@ export default function ViperCanvas(props) {
       onMouseDown={onMouseDown}
       onWheel={onWheel}
       on:dblclick={onDoubleClick}
+      onMouseMove={onMouseMove}
       ref={canvasEl}
       height={$chart.dimensions.main.height.get()}
       width={$chart.dimensions.main.width.get()}

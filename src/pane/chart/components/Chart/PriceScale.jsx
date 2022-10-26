@@ -69,12 +69,21 @@ export default function PriceScale({ $chart }) {
 function RenderLayer({ $chart, layerId }) {
   return (
     <div
-      className="w-full relative overflow-hidden"
+      className="w-full relative overflow-hidden select-none"
       style={{
         height: `${$chart.dimensions.main.layers.get()[layerId].height}px`,
       }}
     >
-      {$chart.scales.price.get()[layerId]}
+      <div>{$chart.scales.price.get()[layerId]}</div>
+      <div
+        className="absolute p-1 text-z-3 text-xs text-center font-bold whitespace-nowrap bg-z-9"
+        style={{
+          top: `${$chart.crosshair.get().price[0]}px`,
+          transform: "translateY(-50%)",
+        }}
+      >
+        {$chart.crosshair.get().price[1]}
+      </div>
     </div>
   );
 }

@@ -7,9 +7,11 @@ import PriceScale from "./components/Chart/PriceScale";
 function App({ $chart }) {
   return (
     <div className="relative overflow-hidden h-full w-full bg-black text-gray-100">
-      <ViperCanvas $chart={$chart} />
+      <div className="flex">
+        <ViperCanvas $chart={$chart} />
+        <PriceScale $chart={$chart} />
+      </div>
       <TimeScale $chart={$chart} />
-      <PriceScale $chart={$chart} />
       <div className="absolute p-4">
         <Overlay $chart={$chart} />
       </div>
