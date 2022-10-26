@@ -63,11 +63,9 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
   regl: null,
 
   scales: {
-    time: v([]),
-    price: v({}),
+    time: v(document.createElement("div")),
+    price: v(document.createElement("div")),
   },
-
-  yLabels: v([]),
 
   /**
    * On parent emitted events

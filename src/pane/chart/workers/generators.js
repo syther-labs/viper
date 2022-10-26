@@ -4,7 +4,7 @@ import Decimal from "decimal.js";
 import helpers from "./helpers";
 
 export function TimeScales(pixelsPerElement, timeframe, start, end, width) {
-  const scales = [];
+  const scales = document.createElement("div");
 
   const minPixels = 100;
   let xTimeStep = 0;
@@ -57,7 +57,12 @@ export function TimeScales(pixelsPerElement, timeframe, start, end, width) {
       }
     }
 
-    scales.push([getX(time), text]);
+    const scale = document.createElement("div");
+    scale.classList = "text-z-5 text-xs text-center absolute";
+    scale.style.left = `${getX(time)}px`;
+    scale.innerText = text;
+
+    scales.appendChild(scale);
   }
 
   return scales;
@@ -95,30 +100,37 @@ export function PriceScales(yRanges, dimensions, sets) {
     const getY = v =>
       utils.getYCoordByPrice(layer.range.min, layer.range.max, height, v);
 
-    scales[id] = {
-      scales: [],
-      yLabels: [],
-    };
+    scales[id] = document.createElement("div");
 
     // Generate all scales
     for (let i = 0; i < (max - min) / interval; i++) {
       const value = interval.times(i).add(min).toNumber();
       if (value < layer.range.min || value > layer.range.max) continue;
 
-      scales[id].scales.push([
-        getY(value),
-        helpers.yScale.scales.scaleText(value, layer.scaleType),
-      ]);
+      const scale = document.createElement("div");
+      scale.classList = "text-z-5 text-xs text-center absolute w-full";
+      scale.style.top = `${getY(value)}px`;
+      scale.innerText = helpers.yScale.scales.scaleText(value, layer.scaleType);
+
+      scales[id].appendChild(scale);
     }
 
     // Generate yLabel plots
     for (const [value, text, color] of layer.yLabels) {
-      scales[id].yLabels.push([
-        getY(value),
-        helpers.yScale.plots.yScaleText(value, color, layer.scaleType),
-        text,
+      let yScaleText = helpers.yScale.plots.yScaleText(
+        value,
         color,
-      ]);
+        layer.scaleType
+      );
+
+      const yLabel = document.createElement("div");
+      yLabel.classList = "text-z-5 text-xs p-1 text-center absolute w-full";
+      yLabel.style.top = `${getY(value)}px`;
+      yLabel.style.background = color;
+      yLabel.style.color = yScaleText[1];
+      yLabel.innerText = yScaleText[0];
+
+      scales[id].appendChild(yLabel);
     }
   }
 

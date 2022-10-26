@@ -38,21 +38,8 @@ export default function TimeScale({ $chart }) {
       onMouseDown={onMouseDown}
     >
       <div className="relative w-full h-full overflow-hidden">
-        <For each={$chart.scales.time.get()}>
-          {([left, text]) => <RenderTime {...{ left, text }} />}
-        </For>
+        {$chart.scales.time.get()}
       </div>
-    </div>
-  );
-}
-
-function RenderTime({ left, text }) {
-  return (
-    <div
-      className="text-z-5 text-xs text-center absolute"
-      style={{ left: `${left}px` }}
-    >
-      {text}
     </div>
   );
 }
