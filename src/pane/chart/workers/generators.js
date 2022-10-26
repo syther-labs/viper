@@ -63,7 +63,7 @@ export function TimeScales(pixelsPerElement, timeframe, start, end, width) {
   return scales;
 }
 
-export function PriceScales(yRanges, dimensions) {
+export function PriceScales(yRanges, dimensions, sets) {
   const scales = {};
 
   for (const id in yRanges) {
@@ -95,15 +95,29 @@ export function PriceScales(yRanges, dimensions) {
     const getY = v =>
       utils.getYCoordByPrice(layer.range.min, layer.range.max, height, v);
 
-    scales[id] = [];
+    scales[id] = {
+      scales: [],
+      yLabels: [],
+    };
 
+    // Generate all scales
     for (let i = 0; i < (max - min) / interval; i++) {
       const value = interval.times(i).add(min).toNumber();
       if (value < layer.range.min || value > layer.range.max) continue;
 
-      scales[id].push([
+      scales[id].scales.push([
         getY(value),
         helpers.yScale.scales.scaleText(value, layer.scaleType),
+      ]);
+    }
+
+    // Generate yLabel plots
+    for (const [value, text, color] of layer.yLabels) {
+      scales[id].yLabels.push([
+        getY(value),
+        helpers.yScale.plots.yScaleText(value, color, layer.scaleType),
+        text,
+        color,
       ]);
     }
   }

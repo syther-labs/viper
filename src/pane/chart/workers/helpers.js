@@ -18,14 +18,14 @@ export default {
       //   }
       //   return value;
       // },
-      //   yScaleText(value, color, scaleType) {
-      //     let text = `${value}`;
-      //     if (scaleType === 1) {
-      //       const a = value >= 0 ? "+" : "";
-      //       text = `${a}${value}%`;
-      //     }
-      //     return { text, color: Utils.isColorLight(color) ? "#000" : "#FFF" };
-      //   },
+      yScaleText(value, color, scaleType) {
+        let text = `${value}`;
+        if (scaleType === 1) {
+          const a = value >= 0 ? "+" : "";
+          text = `${a}${value}%`;
+        }
+        return [text, utils.isColorLight(color) ? "#000" : "#FFF"];
+      },
     },
 
     scales: {

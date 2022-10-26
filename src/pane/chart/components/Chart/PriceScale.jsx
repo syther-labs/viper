@@ -74,14 +74,37 @@ function RenderLayer({ $chart, layerId }) {
         height: `${$chart.dimensions.main.layers.get()[layerId].height}px`,
       }}
     >
-      <For each={$chart.scales.price.get()[layerId]}>
+      <For each={$chart.scales.price.get()[layerId].scales}>
         {([top, text]) => (
           <div
-            className="text-z-2 text-xs text-center absolute w-full"
+            className="text-z-5 text-xs text-center absolute w-full"
             style={{ top: `${top}px` }}
           >
             {text}
           </div>
+        )}
+      </For>
+      <For each={$chart.scales.price.get()[layerId].yLabels}>
+        {([top, text, offText, color]) => (
+          <>
+            <div
+              className="text-z-5 text-xs p-1 text-center absolute w-full"
+              style={{ top: `${top}px`, background: color, color: text[1] }}
+            >
+              {text[0]}
+            </div>
+            <div
+              className="text-z-5 text-xs p-1 text-center absolute"
+              style={{
+                right: "100%",
+                top: `${top}px`,
+                background: color,
+                color: text[1],
+              }}
+            >
+              {offText}
+            </div>
+          </>
         )}
       </For>
     </div>

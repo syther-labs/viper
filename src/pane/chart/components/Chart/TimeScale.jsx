@@ -49,7 +49,7 @@ export default function TimeScale({ $chart }) {
 function RenderTime({ left, text }) {
   return (
     <div
-      className="text-z-2 text-xs text-center absolute"
+      className="text-z-5 text-xs text-center absolute"
       style={{ left: `${left}px` }}
     >
       {text}
