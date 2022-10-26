@@ -1,5 +1,7 @@
 import utils from "../utils";
 import constants from "../constants";
+import Decimal from "decimal.js";
+import helpers from "./helpers";
 
 export function TimeScales(pixelsPerElement, timeframe, start, end, width) {
   const scales = [];
@@ -56,6 +58,54 @@ export function TimeScales(pixelsPerElement, timeframe, start, end, width) {
     }
 
     scales.push([getX(time), text]);
+  }
+
+  return scales;
+}
+
+export function PriceScales(yRanges, dimensions) {
+  const scales = {};
+
+  for (const id in yRanges) {
+    const layer = yRanges[id].get();
+    let { min, max } = layer.range;
+
+    if (min === Infinity || max === -Infinity) continue;
+
+    const { height } = dimensions.main.layers.get()[id];
+
+    const range = new Decimal(max - min);
+    const exp = new Decimal(+range.toExponential().split("e")[1]);
+    let interval = new Decimal(10).pow(exp);
+
+    const baseInterval = new Decimal(interval);
+    let i = 1;
+    const arr = [0.5, 0.25, 0.1, 0.05, 0.025, 0.001];
+    while ((max - min) / interval < Math.floor(height / 50)) {
+      if (!arr[i]) break;
+      interval = baseInterval.times(arr[i]);
+      i++;
+    }
+
+    min = new Decimal(min).minus(new Decimal(min).modulo(interval)).toNumber();
+    max = new Decimal(max)
+      .plus(interval.minus(new Decimal(max).modulo(interval)))
+      .toNumber();
+
+    const getY = v =>
+      utils.getYCoordByPrice(layer.range.min, layer.range.max, height, v);
+
+    scales[id] = [];
+
+    for (let i = 0; i < (max - min) / interval; i++) {
+      const value = interval.times(i).add(min).toNumber();
+      if (value < layer.range.min || value > layer.range.max) continue;
+
+      scales[id].push([
+        getY(value),
+        helpers.yScale.scales.scaleText(value, layer.scaleType),
+      ]);
+    }
   }
 
   return scales;

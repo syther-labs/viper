@@ -11,7 +11,7 @@ import workers from "./workers/workers.js";
 import { set, uniqueId } from "lodash";
 import global from "../../global";
 import plot_types from "./data/plot_types";
-import { TimeScales } from "./workers/generators";
+import { PriceScales, TimeScales } from "./workers/generators";
 
 /**
  * Create a new chart
@@ -165,8 +165,9 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     const width = this.dimensions.main.width.get();
     const height = this.dimensions.main.height.get();
 
-    const layer = this.state.ranges.y.get()[layerId].get();
     const xRange = this.state.ranges.x.get();
+    const yRanges = this.state.ranges.y.get();
+    const layer = yRanges[layerId].get();
     const yRange = layer.range;
 
     let {
@@ -190,7 +191,6 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     }
 
     const indicators = this.state.indicators.get();
-    const yRanges = this.state.ranges.y.get();
     const timeframe = this.state.timeframe.get();
 
     const minTime = start - (start % timeframe);
@@ -290,6 +290,8 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
         width
       )
     );
+
+    this.scales.price.set(PriceScales(yRanges, this.dimensions));
 
     /// OLD CODE BEYOND
 

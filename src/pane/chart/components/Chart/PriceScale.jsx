@@ -1,3 +1,5 @@
+import { Index } from "solid-js";
+
 export default function PriceScale({ $chart }) {
   let layerToMove;
 
@@ -41,6 +43,8 @@ export default function PriceScale({ $chart }) {
     $chart.setVisibleRange({ min, max }, layerToMove);
   }
 
+  // Make a unique container for each layer and render the scales for each
+
   return (
     <div
       className="absolute cursor-ns-resize border-l-1 border-b-1 border-z-8"
@@ -54,6 +58,32 @@ export default function PriceScale({ $chart }) {
       context-menu-id="yScale"
       on:dblclick={onDoubleClick}
       onMouseDown={onMouseDown}
-    />
+    >
+      <For each={Object.keys($chart.scales.price.get())}>
+        {layerId => <RenderLayer {...{ $chart, layerId }} />}
+      </For>
+    </div>
+  );
+}
+
+function RenderLayer({ $chart, layerId }) {
+  return (
+    <div
+      className="w-full relative overflow-hidden"
+      style={{
+        height: `${$chart.dimensions.main.layers.get()[layerId].height}px`,
+      }}
+    >
+      <For each={$chart.scales.price.get()[layerId]}>
+        {([top, text]) => (
+          <div
+            className="text-z-2 text-xs text-center absolute w-full"
+            style={{ top: `${top}px` }}
+          >
+            {text}
+          </div>
+        )}
+      </For>
+    </div>
   );
 }
