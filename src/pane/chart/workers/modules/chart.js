@@ -116,14 +116,22 @@ const methods = {
         set.data[id] = [];
       }
 
-      // Get index of time ahead of this point
-      let i = set.times.indexOf(time + set.timeframe);
+      // If time is not in array, add to correct index
+      let i = 0;
+      // If smallest time, add to start
+      if (time < set.times[0]) i = 0;
+      // If largest time, add to end
+      else if (time > set.times[set.times.length - 1]) {
+        i = set.times.length;
+      }
 
-      // If time is not in array, add to start or end
-      if (i === -1) {
-        if (time < set.times[0]) i = 0;
-        else if (time > set.times[set.times.length - 1]) {
-          i = set.times.length;
+      // Search in between array
+      else {
+        for (; i <= set.times.length; i++) {
+          if (time > set.times[i] && time < set.times[i + 1]) {
+            i++;
+            break;
+          }
         }
       }
 

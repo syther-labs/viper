@@ -23,6 +23,8 @@ export default {
         if (scaleType === 1) {
           const a = value >= 0 ? "+" : "";
           text = `${a}${value}%`;
+        } else if (scaleType === 2) {
+          text = `${value}`;
         }
         return [text, utils.isColorLight(color) ? "#000" : "#FFF"];
       },

@@ -22,6 +22,7 @@ const bases = {
     draw({ open, high, low, close, plotCandle }) {
       const color = close >= open ? "#C4FF49" : "#FE3A64";
       plotCandle({
+        id: "candlestick",
         open,
         high,
         low,
@@ -29,7 +30,7 @@ const bases = {
         title: "Candlestick",
         color,
         wickcolor: color,
-        ylabel: true,
+        yLabel: true,
       });
     },
   },

@@ -62,6 +62,11 @@ export default class Viper {
     });
   }
 
+  updateDataset(datasetId, data) {
+    const dataset = global.data.datasets[datasetId];
+    dataset.updateDataset(data);
+  }
+
   destory() {
     keybinds.destroy();
     ui.destroy();

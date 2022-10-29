@@ -8,7 +8,7 @@ import { v } from "../../api/api";
 
 import dimensions from "./local-state/dimensions";
 import workers from "./workers/workers.js";
-import { set, uniqueId } from "lodash";
+import { uniqueId } from "lodash";
 import global from "../../global";
 import plot_types from "./data/plot_types";
 import { PriceScales, TimeScales } from "./workers/generators";
@@ -63,12 +63,13 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
   regl: null,
   crosshair: v({
     time: [],
-    value: [],
+    price: [],
   }),
   scales: {
     time: v(document.createElement("div")),
     price: v(document.createElement("div")),
   },
+  anchorTime: 0,
 
   /**
    * On parent emitted events
@@ -87,6 +88,10 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
         this.element.clientHeight
       );
 
+      const now = Date.now();
+      const timeframe = this.state.timeframe.get();
+      this.anchorTime = now - (now % timeframe) - timeframe * 500;
+
       // If no ranges, create a default one
       if (!Object.keys(this.state.ranges.y.get()).length) {
         this.addLayer(10);
@@ -101,7 +106,9 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
           const plot = this.createDataModelGroup({ source, name });
 
           // Add indicator for each
-          this.addIndicator(plot_types.bases.line, plot, "price", {});
+          this.addIndicator(plot_types.bases.candlestick, plot, "price", {});
+
+          break;
         }
       }
     }
@@ -198,8 +205,8 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
       const indicators = this.state.indicators.get();
       const timeframe = this.state.timeframe.get();
 
-      const minTime = start - (start % timeframe);
-      const maxTime = end + timeframe - (end % timeframe);
+      const minTime = start - (start % timeframe) - this.anchorTime;
+      const maxTime = end + timeframe - (end % timeframe) - this.anchorTime;
 
       // Loop through all layers
       for (const id in yRanges) {
@@ -223,10 +230,13 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
 
           if (j === -1) j = set.times.length - 1;
 
+          console.log(set.times);
+          console.log(j);
+
           // Set times to array of times in viewport
           set.buffers.times(set.times.slice(i, j + 1));
 
-          // Clear the first and last point in set
+          // Clear the first point in set
           set.first = undefined;
 
           for (const id in set.configs) {
@@ -236,10 +246,6 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
             const data = set.data[id].slice(i * l, j * l + 1);
 
             if (set.first === undefined) set.first = data[0];
-
-            if (config.yLabel) {
-              yLabels.push([data[data.length - 1], model, config.colors.color]);
-            }
 
             // If no buffer exists for this set config, create it
             if (!set.buffers.data[id]) {
@@ -271,6 +277,16 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
             set.visibleMin = visibleMin;
             set.visibleMax = visibleMax;
             minsAndMaxs.push(visibleMin, visibleMax);
+
+            if (config.yLabel) {
+              let value = data[data.length - 1];
+
+              if (scaleType === 1) {
+                value = ((value - set.first) / Math.abs(set.first)) * 100;
+              }
+
+              yLabels.push([value, model, config.colors.color, set]);
+            }
           }
         }
 
@@ -374,6 +390,8 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
 
     // Set the timeframe
     this.state.timeframe.set(timeframe);
+    const now = Date.now();
+    this.anchorTime = now - (now % timeframe) - timeframe * 500;
 
     // Reset range
     this.setInitialVisibleRange();
@@ -561,7 +579,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
       lockedYScale: true,
       visible: true,
       fullscreen: false,
-      scaleType: 1,
+      scaleType: 0,
       indicatorIds: [],
       range: { min: Infinity, max: -Infinity },
     });

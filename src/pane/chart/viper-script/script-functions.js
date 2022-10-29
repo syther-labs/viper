@@ -81,27 +81,27 @@ export default {
   },
 
   plotCandle(
-    { addSetItem, time },
+    { set, addSetItem, time },
     {
+      id,
       open,
       high,
       low,
       close,
       title,
       color = "#FFF",
-      wickcolor = "#FFF",
-      ylabel = false,
+      wickColor = "#FFF",
+      yLabel = false,
     }
   ) {
-    addSetItem(time, "candle", {
-      series: [open, high, low, close],
+    set.configs[id] = {
+      type: "candle",
+      colors: { color, wickColor },
       title,
-      colors: {
-        color,
-        wickcolor,
-      },
-      ylabel,
-    });
+      length: 4,
+      yLabel,
+    };
+    addSetItem(id, time, [open, high, low, close]);
   },
 
   plotText() {},

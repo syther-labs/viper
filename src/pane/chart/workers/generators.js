@@ -58,7 +58,7 @@ export function TimeScales(pixelsPerElement, timeframe, start, end, width) {
     }
 
     const scale = document.createElement("div");
-    scale.classList = "text-z-5 text-xs text-center absolute";
+    scale.classList = "text-z-5 text-xxs text-center absolute";
     scale.style.left = `${getX(time)}px`;
     scale.innerText = text;
 
@@ -108,7 +108,7 @@ export function PriceScales(yRanges, dimensions, sets) {
       if (value < layer.range.min || value > layer.range.max) continue;
 
       const scale = document.createElement("div");
-      scale.classList = "text-z-5 text-xs text-center absolute w-full";
+      scale.classList = "text-z-5 text-xxs text-center absolute w-full";
       scale.style.top = `${getY(value)}px`;
       scale.innerText = helpers.yScale.scales.scaleText(value, layer.scaleType);
 
@@ -116,15 +116,19 @@ export function PriceScales(yRanges, dimensions, sets) {
     }
 
     // Generate yLabel plots
-    for (const [value, text, color] of layer.yLabels) {
+    for (let [value, text, color, set] of layer.yLabels) {
       let yScaleText = helpers.yScale.plots.yScaleText(
         value,
         color,
         layer.scaleType
       );
 
+      if (layer.scaleType === 2) {
+        value = ((value - set.min) / (set.max - set.min)) * 100;
+      }
+
       const yLabel = document.createElement("div");
-      yLabel.classList = "text-z-5 text-xs p-1 text-center absolute w-full";
+      yLabel.classList = "text-z-5 text-xxs p-1 text-center absolute w-full";
       yLabel.style.top = `${getY(value)}px`;
       yLabel.style.background = color;
       yLabel.style.color = yScaleText[1];

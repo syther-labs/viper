@@ -64,8 +64,8 @@ export default class RenderingEngine {
         const { start, end } = this.$chart.state.ranges.x.get();
         const projection = mat4.ortho(
           mat4.create(),
-          start,
-          end,
+          start - this.$chart.anchorTime,
+          end - this.$chart.anchorTime,
           range.min,
           range.max,
           0,
@@ -87,7 +87,7 @@ export default class RenderingEngine {
                 setMin: set.min,
                 setMax: set.max,
 
-                width: (range.max - range.min) / 500,
+                width: (range.max - range.min) / 100,
                 color: datastore.colors[i],
 
                 projection,
@@ -97,20 +97,24 @@ export default class RenderingEngine {
               break;
             case "candle":
               this.programs.candlestick({
+                times: set.buffers.times,
                 points: buffer,
+
                 color: datastore.colors[i],
                 projection,
                 viewport,
                 timeframe,
-                segments: length / 5,
+                segments: length / 4,
               });
               this.programs.candlebody({
+                times: set.buffers.times,
                 points: buffer,
+
                 color: datastore.colors[i],
                 projection,
                 viewport,
                 timeframe,
-                segments: length / 5,
+                segments: length / 4,
               });
               break;
           }

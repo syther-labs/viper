@@ -41,6 +41,7 @@ export function LineProgram(regl) {
         vec2 xBasis = vec2(timeB, pB) - vec2(timeA, pA);
         vec2 yBasis = normalize(vec2(-xBasis.y, xBasis.x));
         vec2 point = vec2(timeA, pA) + xBasis * position.x + yBasis * width * position.y;
+        
         gl_Position = projection * vec4(point, 0, 1);
       }`,
 
@@ -174,22 +175,22 @@ export function CandleStickProgram(regl) {
         divisor: 0,
       },
       timestamp: {
-        buffer: regl.prop("points"),
+        buffer: regl.prop("times"),
         divisor: 1,
         offset: Float32Array.BYTES_PER_ELEMENT * 0,
-        stride: Float32Array.BYTES_PER_ELEMENT * 5,
+        stride: Float32Array.BYTES_PER_ELEMENT * 1,
       },
       high: {
         buffer: regl.prop("points"),
         divisor: 1,
-        offset: Float32Array.BYTES_PER_ELEMENT * 2,
-        stride: Float32Array.BYTES_PER_ELEMENT * 5,
+        offset: Float32Array.BYTES_PER_ELEMENT * 1,
+        stride: Float32Array.BYTES_PER_ELEMENT * 4,
       },
       low: {
         buffer: regl.prop("points"),
         divisor: 1,
-        offset: Float32Array.BYTES_PER_ELEMENT * 3,
-        stride: Float32Array.BYTES_PER_ELEMENT * 5,
+        offset: Float32Array.BYTES_PER_ELEMENT * 2,
+        stride: Float32Array.BYTES_PER_ELEMENT * 4,
       },
     },
 
@@ -253,22 +254,22 @@ export function CandleBodyProgram(regl) {
         divisor: 0,
       },
       timestamp: {
-        buffer: regl.prop("points"),
+        buffer: regl.prop("times"),
         divisor: 1,
         offset: Float32Array.BYTES_PER_ELEMENT * 0,
-        stride: Float32Array.BYTES_PER_ELEMENT * 5,
+        stride: Float32Array.BYTES_PER_ELEMENT * 1,
       },
       open: {
         buffer: regl.prop("points"),
         divisor: 1,
-        offset: Float32Array.BYTES_PER_ELEMENT * 1,
-        stride: Float32Array.BYTES_PER_ELEMENT * 5,
+        offset: Float32Array.BYTES_PER_ELEMENT * 0,
+        stride: Float32Array.BYTES_PER_ELEMENT * 4,
       },
       close: {
         buffer: regl.prop("points"),
         divisor: 1,
-        offset: Float32Array.BYTES_PER_ELEMENT * 4,
-        stride: Float32Array.BYTES_PER_ELEMENT * 5,
+        offset: Float32Array.BYTES_PER_ELEMENT * 3,
+        stride: Float32Array.BYTES_PER_ELEMENT * 4,
       },
     },
 

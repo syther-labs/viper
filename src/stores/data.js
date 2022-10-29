@@ -195,16 +195,7 @@ class DataState {
     // Sort by latest timestamps
     requests = requests.sort((a, b) => b.end - a.end);
 
-    for (const request of requests) {
-      const { source, name, modelId, timeframe } = request;
-      const datasetId = `${source}:${name}:${modelId}:${timeframe}`;
-      const dataset = this.datasets[datasetId];
-
-      (async () => {
-        const data = await global.requestData(request);
-        dataset.updateDataset(data);
-      })();
-    }
+    global.requestData(requests);
   }
 }
 
