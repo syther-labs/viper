@@ -69,7 +69,7 @@ export default function PriceScale({ $chart }) {
 function RenderLayer({ $chart, layerId }) {
   return (
     <div
-      className="w-full relative overflow-hidden select-none"
+      className="w-full relative overflow-inherit select-none"
       style={{
         height: `${$chart.dimensions.main.layers.get()[layerId].height}px`,
       }}

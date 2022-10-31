@@ -8,7 +8,7 @@ import { v } from "../../api/api";
 
 import dimensions from "./local-state/dimensions";
 import workers from "./workers/workers.js";
-import { uniqueId } from "lodash";
+import _, { uniqueId } from "lodash";
 import global from "../../global";
 import plot_types from "./data/plot_types";
 import { PriceScales, TimeScales } from "./workers/generators";
@@ -48,7 +48,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
       y: v({}),
     },
 
-    pixelsPerElement: v(10),
+    pixelsPerElement: v(5),
   },
 
   // Local state
@@ -106,9 +106,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
           const plot = this.createDataModelGroup({ source, name });
 
           // Add indicator for each
-          this.addIndicator(plot_types.bases.candlestick, plot, "price", {});
-
-          break;
+          this.addIndicator(plot_types.bases.line, plot, "price", {});
         }
       }
     }
@@ -158,7 +156,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     const width = this.dimensions.main.width.get();
 
     const endTimestamp = Math.floor(Date.now() / timeframe) * timeframe;
-    this.state.pixelsPerElement.set(10);
+    this.state.pixelsPerElement.set(5);
 
     const candlesInView = width / this.state.pixelsPerElement.get();
     end = endTimestamp + timeframe * 10;
@@ -220,7 +218,9 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
 
         // Loop through all indicators in layer
         for (const indicatorId of indicatorIds) {
-          const { visible, model } = indicators[indicatorId].get();
+          const { visible, model, plot } = indicators[indicatorId].get();
+          const { dataset } = plot.get();
+
           const set = this.sets[indicatorId];
 
           if (!visible) continue;
@@ -229,9 +229,6 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
           let j = set.times.indexOf(maxTime);
 
           if (j === -1) j = set.times.length - 1;
-
-          console.log(set.times);
-          console.log(j);
 
           // Set times to array of times in viewport
           set.buffers.times(set.times.slice(i, j + 1));
@@ -285,7 +282,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
                 value = ((value - set.first) / Math.abs(set.first)) * 100;
               }
 
-              yLabels.push([value, model, config.colors.color, set]);
+              yLabels.push([value, dataset, config.colors.color, set]);
             }
           }
         }
@@ -579,7 +576,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
       lockedYScale: true,
       visible: true,
       fullscreen: false,
-      scaleType: 0,
+      scaleType: 1,
       indicatorIds: [],
       range: { min: Infinity, max: -Infinity },
     });

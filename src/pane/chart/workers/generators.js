@@ -116,7 +116,7 @@ export function PriceScales(yRanges, dimensions, sets) {
     }
 
     // Generate yLabel plots
-    for (let [value, text, color, set] of layer.yLabels) {
+    for (let [value, dataset, color, set] of layer.yLabels) {
       let yScaleText = helpers.yScale.plots.yScaleText(
         value,
         color,
@@ -127,9 +127,23 @@ export function PriceScales(yRanges, dimensions, sets) {
         value = ((value - set.min) / (set.max - set.min)) * 100;
       }
 
+      const top = `${getY(value)}px`;
+
+      const mainLabel = document.createElement("div");
+      mainLabel.classList = "text-z-5 text-xxs p-1 text-center absolute";
+      mainLabel.style.top = top;
+      mainLabel.style.right = "100%";
+      mainLabel.style.background = color;
+      mainLabel.style.color = yScaleText[1];
+      // <span class="text-xxs leading-0">${dataset.source}</span>
+      mainLabel.innerHTML = `
+        <span class="text-xxs font-bold">${dataset.name}</span>
+      `;
+      scales[id].appendChild(mainLabel);
+
       const yLabel = document.createElement("div");
       yLabel.classList = "text-z-5 text-xxs p-1 text-center absolute w-full";
-      yLabel.style.top = `${getY(value)}px`;
+      yLabel.style.top = top;
       yLabel.style.background = color;
       yLabel.style.color = yScaleText[1];
       yLabel.innerText = yScaleText[0];

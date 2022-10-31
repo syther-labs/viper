@@ -87,7 +87,7 @@ export default class RenderingEngine {
                 setMin: set.min,
                 setMax: set.max,
 
-                width: (range.max - range.min) / 100,
+                width: (range.max - range.min) / 500,
                 color: datastore.colors[i],
 
                 projection,

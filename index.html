@@ -14,59 +14,56 @@
       import Viper from "./index.jsx";
       import { chunk } from "lodash";
 
-      const dataModels = {};
+      // Get all data 
+      const res = await fetch("https://viper-proxy.herokuapp.com/data/1h");
+      const { data } = await res.json();
 
-      const sources = { 
-        BINANCE: await getDatasetsFromBinance()
+      const dataModels = {
+        price: {
+          id: "price",
+          name: "Price",
+          model: "ohlc",
+          label: "%s:%n"
+        }
       };
 
-      async function getDatasetsFromBinance() {
-        const res = await fetch("http://localhost:3000/symbols");
-        const json = await res.json();
+      const sources = {
+        BINANCE: {}
+      };
 
-        const datasets = {};
-
-        for (const item of json) {
-          datasets[item] = {
-            source: "BINANCE",
-            name: item,
-            modelIds: ["price"],
-          };
+      for (const key in data) {
+        sources.BINANCE[key] = {
+          source: "BINANCE",
+          name: key,
+          modelIds: ["price"]
         }
-
-        return datasets;
       }
-
-      let names = []
 
       const viper = new Viper({
         element: document.getElementById("root"),
         sources,
         dataModels,
         requestData: async (requests) => {
-          for (const { source, name, modelId, timeframe } of requests) {
-            if (names.includes(name)) continue;
+          for (const { source, name, modelId, timeframe, start, end } of requests) {
+            const points = data[name];
 
-            const res = await fetch(
-              `http://localhost:3000/symbol?symbol=${name}`
-            );
-            const json = await res.json();
+            const updates = {};
 
-            const data = {};
+            for (const point of points) {
+              const [timestamp, open, high, low, close] = point;
 
-            for (const item of json.data) {
-              const [timestamp, open, high, low, close] = item;
+              if (timestamp <= start) continue;
+              if (timestamp > end) break;
 
-              data[timestamp] = {
+              updates[timestamp] = {
                 open: +open,
                 high: +high,
                 low: +low,
                 close: +close,
               };
             }
-
-            viper.updateDataset(`${source}:${name}:${modelId}:${timeframe}`, data)
-            names.push(name);
+            
+            viper.updateDataset(`${source}:${name}:${modelId}:${timeframe}`, updates)
           }
         },
       })
