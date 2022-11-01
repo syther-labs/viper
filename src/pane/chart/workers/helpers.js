@@ -26,7 +26,7 @@ export default {
         } else if (scaleType === 2) {
           text = `${value}`;
         }
-        return [text, utils.isColorLight(color) ? "#000" : "#FFF"];
+        return [text, "#FFF"];
       },
     },
 

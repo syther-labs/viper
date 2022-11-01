@@ -117,6 +117,10 @@ export function PriceScales(yRanges, dimensions, sets) {
 
     // Generate yLabel plots
     for (let [value, dataset, color, set] of layer.yLabels) {
+      color = `rgba(${color[0] * 255},${color[1] * 255},${color[2] * 255}, ${
+        color[3] * 255
+      })`;
+
       let yScaleText = helpers.yScale.plots.yScaleText(
         value,
         color,

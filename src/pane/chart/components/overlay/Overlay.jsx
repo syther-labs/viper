@@ -4,7 +4,7 @@ import Plots from "./PlottedData/Plots";
 
 export default function Overlay({ $chart }) {
   return (
-    <div>
+    <div className="absolute top-0 p-4 max-h-[50%] w-full max-w-[20rem] overflow-y-auto">
       <div className="flex items-center font-bold mb-2">
         <ChartName $chart={$chart} />
         <span className="mx-2">•</span>

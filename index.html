@@ -8,7 +8,8 @@
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
+    <div id="root">
+    </div>
 
     <script type="module">
       import Viper from "./index.jsx";
@@ -73,6 +74,33 @@
       #root {
         width: 100vw;
         height: 100vh;
+      }
+
+      .zoom-in-out-box {
+        animation: zoom-in-zoom-out 3s ease-in-out infinite;
+        font-size: 10%;
+      }
+      .rotate {
+        animation: rotate 3s normal infinite;
+      }
+      @keyframes zoom-in-zoom-out {
+        0% {
+          transform: scale(1, 1);
+        }
+        50% {
+          transform: scale(1.5, 1.5);
+        }
+        100% {
+          transform: scale(1, 1);
+        }
+      }
+      @keyframes rotate {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
       }
     </style>
   </body>

@@ -12,7 +12,7 @@ function App({ $chart }) {
         <PriceScale $chart={$chart} />
       </div>
       <TimeScale $chart={$chart} />
-      <div className="absolute p-4">
+      <div>
         <Overlay $chart={$chart} />
       </div>
     </div>

@@ -61,6 +61,8 @@ export default class RenderingEngine {
       for (const setId of indicatorIds) {
         const set = this.$chart.sets[setId];
 
+        const { color } = this.$chart.state.indicators.get()[setId].get();
+
         const { start, end } = this.$chart.state.ranges.x.get();
         const projection = mat4.ortho(
           mat4.create(),
@@ -88,7 +90,7 @@ export default class RenderingEngine {
                 setMax: set.max,
 
                 width: (range.max - range.min) / 500,
-                color: datastore.colors[i],
+                color,
 
                 projection,
                 viewport,
@@ -100,7 +102,7 @@ export default class RenderingEngine {
                 times: set.buffers.times,
                 points: buffer,
 
-                color: datastore.colors[i],
+                color,
                 projection,
                 viewport,
                 timeframe,
@@ -110,7 +112,7 @@ export default class RenderingEngine {
                 times: set.buffers.times,
                 points: buffer,
 
-                color: datastore.colors[i],
+                color,
                 projection,
                 viewport,
                 timeframe,

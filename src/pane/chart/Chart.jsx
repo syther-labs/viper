@@ -36,7 +36,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
   // Presistent state
   state: {
     timeframe: v(timeframe),
-    name: v("Untitled chart"),
+    name: v("Relative Strength Chart"),
     plots: v([]),
     indicators: v({}),
 
@@ -227,7 +227,6 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
 
           let i = Math.max(set.times.indexOf(minTime), 0);
           let j = set.times.indexOf(maxTime);
-
           if (j === -1) j = set.times.length - 1;
 
           // Set times to array of times in viewport
@@ -439,7 +438,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
       ...indicator,
       setId,
       renderingQueueId: setId,
-      color: utils.randomHexColor(),
+      color: utils.randomRGBAColor(),
       plot,
       model,
       visible,
@@ -500,11 +499,6 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
 
     indicator.set(v => ({ ...v, visible }));
 
-    this.workers.setIndicatorVisibility({
-      setId,
-      visible,
-    });
-
     // Check if any indicators in layer are visible
     const layer = this.state.ranges.y.get()[indicator.get().layerId];
     let found = false;
@@ -528,7 +522,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
 
     this.dimensions.updateLayers();
 
-    this.workers.generateAllInstructions();
+    this.setVisibleRange({});
   },
 
   removeIndicator(indicator) {

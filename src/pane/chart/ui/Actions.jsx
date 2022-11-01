@@ -24,20 +24,7 @@ export default function Timeframes() {
           <span className="leading-0">Plot Data</span>
         </button>
       </li>
-      <Index
-        each={[
-          1000,
-          5000,
-          15000,
-          30000,
-          6e4,
-          6e4 * 5,
-          6e4 * 15,
-          3.6e6,
-          3.6e6 * 4,
-          3.6e6 * 24,
-        ]}
-      >
+      <Index each={[6e4, 6e4 * 15, 3.6e6]}>
         {timeframe => (
           <li>
             {Action({

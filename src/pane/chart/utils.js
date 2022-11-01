@@ -26,11 +26,14 @@ export default {
     return Math.max(value, max);
   },
 
-  // TEMP hardcode only bright colors
   randomHexColor() {
-    return `#${Math.floor((Math.random() / 2 + 0.5) * (16777215 / 2)).toString(
+    return `#${Math.floor(Math.random() * 16777215).toString(
       16
     )}00000`.substring(0, 7);
+  },
+
+  randomRGBAColor() {
+    return [Math.random(), Math.random(), Math.random(), 1];
   },
 
   /**
