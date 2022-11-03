@@ -36,7 +36,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
   // Presistent state
   state: {
     timeframe: v(timeframe),
-    name: v("Untitled chart"),
+    name: v("Binance Relative Comparison"),
     plots: v([]),
     indicators: v({}),
 

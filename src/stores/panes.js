@@ -4,6 +4,7 @@ import { createMemo } from "solid-js";
 import { createEffect } from "solid-js";
 import { v } from "../api/api";
 import global from "../global";
+import chart from "../pane/chart";
 import utils from "../pane/chart/utils";
 
 /** @type {GridStack|null} */
@@ -182,6 +183,8 @@ export default {
 
     grid.enableMove(false);
     grid.enableResize(false);
+
+    createPane(chart);
   },
 
   destroy() {

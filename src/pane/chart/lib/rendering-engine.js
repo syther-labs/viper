@@ -7,13 +7,6 @@ import {
   LineProgram,
 } from "./gl-programs.js";
 
-// TODO TEMP
-const datastore = {
-  colors: new Array(200)
-    .fill()
-    .map(() => [Math.random(), Math.random(), Math.random(), 1]),
-};
-
 /**
  * Handles render queue and layers including order
  */
