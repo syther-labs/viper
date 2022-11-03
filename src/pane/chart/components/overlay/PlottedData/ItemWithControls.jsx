@@ -1,4 +1,4 @@
-import { v } from "@/api/api.js"
+import { v } from "@/api/api.js";
 
 export default function ItemWithControls(props) {
   const showControls = v(false);
@@ -25,7 +25,7 @@ export default function ItemWithControls(props) {
       >
         <button
           onClick={() => props.onToggleVisible && props.onToggleVisible()}
-          class="h-4 w-4 text-sm flex items-center justify-center"
+          class="h-4 w-4 text-xs flex items-center justify-center md:text-sm"
         >
           <Show when={props.visible}>
             <i class="ri-eye-line"></i>
@@ -36,7 +36,7 @@ export default function ItemWithControls(props) {
         </button>
         <button
           onClick={() => props.onRemove && props.onRemove()}
-          class="h-4 w-4 text-sm flex items-center justify-center"
+          class="h-4 w-4 text-xs flex items-center justify-center md:text-sm"
         >
           <i class="ri-close-line"></i>
         </button>

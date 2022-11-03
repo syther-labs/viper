@@ -36,7 +36,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
   // Presistent state
   state: {
     timeframe: v(timeframe),
-    name: v("Relative Strength Chart"),
+    name: v("Untitled chart"),
     plots: v([]),
     indicators: v({}),
 
@@ -368,6 +368,10 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     // Clear all sets
     this.workers.emptyAllSets();
 
+    // Reset scales and shit
+    this.scales.time.set(document.createElement("div"));
+    this.scales.price.set(document.createElement("div"));
+
     // Loop through all plots and unsubscribe from all datasets
     for (const plot of Object.values(this.state.plots.get())) {
       const { dataset, indicatorIds } = plot.get();
@@ -381,6 +385,11 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
           modelId: model,
           timeframe: this.state.timeframe.get(),
         });
+
+        const set = this.sets[indicatorId];
+        set.times = [];
+        set.configs = {};
+        set.data = {};
       }
     }
 

@@ -15,10 +15,6 @@
       import Viper from "./index.jsx";
       import { chunk } from "lodash";
 
-      // Get all data 
-      const res = await fetch("https://viper-proxy.herokuapp.com/data/1h");
-      const { data } = await res.json();
-
       const dataModels = {
         price: {
           id: "price",
@@ -32,19 +28,41 @@
         BINANCE: {}
       };
 
-      for (const key in data) {
-        sources.BINANCE[key] = {
-          source: "BINANCE",
-          name: key,
-          modelIds: ["price"]
+      await (async () => {
+        const res = await fetch("https://viper-proxy.herokuapp.com/symbols");
+        const { data } = await res.json();
+
+        for (const name of data) {
+          sources.BINANCE[name] = {
+            source: "BINANCE",
+            name,
+            modelIds: ["price"]
+          }
         }
-      }
+      })()
+
+      const datastore = {}
 
       const viper = new Viper({
         element: document.getElementById("root"),
         sources,
         dataModels,
         requestData: async (requests) => {
+          // Get all markets if timeframe is not loaded
+          const timeframe = requests[0].timeframe;
+          const tf = {
+            [60000]: "1m", 
+            [60000 * 15]: "15m", 
+            [3.6e6]: "1h" 
+          }[timeframe];
+          let data = datastore[[tf]]
+
+          if (!data) {
+            const res = await fetch(`https://viper-proxy.herokuapp.com/data/${tf}`);
+            datastore[tf] = (await res.json()).data;
+            data = datastore[tf]
+          }
+
           for (const { source, name, modelId, timeframe, start, end } of requests) {
             const points = data[name];
 

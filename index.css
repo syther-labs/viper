@@ -2,8 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+body {
+  touch-action: none;
+}
+
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 1px;
+  height: 0px;
+}
+
+@media (min-width: 600px) {
+  ::-webkit-scrollbar {
+    width: 3px;
+    height: 3px;
+  }
 }
 
 ::-webkit-scrollbar-track {
@@ -24,8 +36,15 @@
   opacity: 0.5;
 }
 
+.grid-stack {
+  /* TODO TEMP */
+  height: 100% !important;
+}
+
 .grid-stack .grid-stack-item {
   border: 1px solid transparent;
+  /* TODO TEMP */
+  height: 100% !important;
 }
 
 .grid-stack .grid-stack-item-content {

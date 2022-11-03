@@ -19,7 +19,7 @@ export default function Timeframes() {
   return (
     <ul className="flex">
       <li class="flex items-center justify-center">
-        <button onClick={showAddDataModal} className="p-2">
+        <button disabled onClick={showAddDataModal} className="p-2">
           <i class="ri-add-line"></i>
           <span className="leading-0">Plot Data</span>
         </button>

@@ -9,7 +9,7 @@ export default function IndicatorGroup(props) {
           <div className="font-bold">{props.indicatorName}</div>
           <ul className="text-[0.66rem]">
             <For each={props.datasets}>
-              {(dataset) => (
+              {dataset => (
                 <li className="ml-2 my-1">
                   <ItemWithControls
                     slot={

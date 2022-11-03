@@ -26,12 +26,12 @@ export default function DatasetGroup(props) {
       onToggleVisible={onToggleVisible}
       onRemove={onRemove}
       slot={
-        <div className="text-xs p-1">
+        <div className="text-xxs md:text-xs p-1">
           <div className="font-bold">{datasetName()}</div>
           <ul className="text-[0.66rem]">
             <For each={dataModelGroup.get().indicatorIds}>
               {indicatorId => (
-                <li className="ml-2 my-1">
+                <li>
                   <div className="grow">
                     <Indicator
                       type="indicator"

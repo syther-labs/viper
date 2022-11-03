@@ -7,8 +7,8 @@ import Timeframes from "../../pane/chart/ui/Actions";
 
 export default function Navbar() {
   return (
-    <nav className="flex items-center w-full h-12 border-z-8 border-b-1">
-      <div className="border-z-8 border-r-1">
+    <nav className="flex items-center w-full h-12 border-z-8 border-b-1 overflow-x-auto">
+      <div className="border-z-8 border-r-1 shrink-0">
         {Action({
           type: "link",
           link: "https://vipercharts.com",
@@ -17,7 +17,7 @@ export default function Navbar() {
       </div>
 
       {/* Pane defined actions */}
-      <div className="border-z-8 border-r-1 h-full">
+      <div className="border-z-8 border-r-1 h-full overflow-y-hidden shrink-0">
         {/* <Show
           when={actions.length}
           fallback={Action({
@@ -35,13 +35,18 @@ export default function Navbar() {
 
       <div className="grow"></div>
 
-      <div className="flex items-center border-z-8 border-l-1 h-full">
+      <div className="flex items-center border-z-8 border-l-1 h-full shrink-0">
         {Action({
           type: "button",
           onClick: () => gridEdit.set(!gridEdit.get()),
           text: gridEdit.get() ? "Lock grid" : "Unlock grid",
+          disabled: true,
         })}
-        <button onClick={[createPane, Chart]} className="bg-primary h-12 w-12">
+        <button
+          disabled
+          onClick={[createPane, Chart]}
+          className="bg-primary h-12 w-12"
+        >
           <i class="ri-add-line text-xl"></i>
         </button>
       </div>

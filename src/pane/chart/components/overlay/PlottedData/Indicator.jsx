@@ -21,18 +21,20 @@ export default function Indicator(props) {
       onToggleVisible={onToggleVisible}
       onRemove={onRemove}
       slot={
-        <Switch fallback={<div>Error</div>}>
-          <Match when={props.type === "indicator"}>
-            <div>
-              <span className="mr-2">{indicator.get().model.name}</span>
-              <span className="opacity-75">{indicator.get().name}</span>
-            </div>
-          </Match>
-          <Match when={indicator.get().type === "dataset"}>
-            <span className="mr-2">{indicator.get().name}</span>
-            <span className="opacity-75">{indicator.get().model.name}</span>
-          </Match>
-        </Switch>
+        <div className="text-xxs">
+          <Switch fallback={<div>Error</div>}>
+            <Match when={props.type === "indicator"}>
+              <div>
+                <span className="mr-2">{indicator.get().model.name}</span>
+                <span className="opacity-75">{indicator.get().name}</span>
+              </div>
+            </Match>
+            <Match when={indicator.get().type === "dataset"}>
+              <span className="mr-2">{indicator.get().name}</span>
+              <span className="opacity-75">{indicator.get().model.name}</span>
+            </Match>
+          </Switch>
+        </div>
       }
     />
   );

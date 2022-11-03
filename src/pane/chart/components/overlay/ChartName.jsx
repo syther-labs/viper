@@ -36,7 +36,7 @@ export default function ChartName({ $chart }) {
       <Show when={!isEdit.get()}>
         <button
           onClick={() => isEdit.set(true)}
-          className="border-2 border-transparent"
+          className="border-2 border-transparent text-xs md:text-md"
         >
           {$chart.state.name.get()}
         </button>

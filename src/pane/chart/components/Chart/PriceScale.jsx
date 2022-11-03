@@ -2,6 +2,7 @@ import { Index } from "solid-js";
 
 export default function PriceScale({ $chart }) {
   let layerToMove;
+  let previousTouch;
 
   function onDoubleClick(e) {
     const layerId = $chart.getLayerByYCoord(e.clientY);
@@ -14,17 +15,34 @@ export default function PriceScale({ $chart }) {
   }
 
   function onMouseDown(e) {
+    e.stopPropagation();
+    e.preventDefault();
     window.addEventListener("mouseup", onMouseUp);
+    window.addEventListener("touchend", onMouseUp);
     window.addEventListener("mousemove", onDragToResize);
+    window.addEventListener("touchmove", onDragToResize);
   }
 
   function onMouseUp(e) {
     window.removeEventListener("mouseup", onMouseUp);
+    window.removeEventListener("touchend", onMouseUp);
     window.removeEventListener("mousemove", onDragToResize);
+    window.removeEventListener("touchmove", onDragToResize);
+    previousTouch = undefined;
   }
 
-  function onDragToResize({ movementY, layerY }) {
-    if (movementY === 0) return;
+  function onDragToResize(e) {
+    e.preventDefault();
+    let { movementY = 0, layerY } = e;
+
+    // If mobile touch
+    if (e.touches) {
+      if (previousTouch) {
+        movementY = e.touches[0].pageY - previousTouch.pageY;
+      }
+
+      previousTouch = e.touches[0];
+    }
 
     if (!layerToMove) {
       layerToMove = $chart.getLayerByYCoord(layerY);
@@ -54,10 +72,12 @@ export default function PriceScale({ $chart }) {
         width: `${$chart.dimensions.yScale.width.get()}px`,
         height: `${$chart.dimensions.yScale.height.get()}px`,
         background: "rgba(10,10,10,1)",
+        touchAction: "none",
       }}
       context-menu-id="yScale"
       on:dblclick={onDoubleClick}
       onMouseDown={onMouseDown}
+      draggable=""
     >
       <For each={Object.keys($chart.scales.price.get())}>
         {layerId => <RenderLayer {...{ $chart, layerId }} />}
