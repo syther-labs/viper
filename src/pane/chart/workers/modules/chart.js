@@ -52,7 +52,6 @@ const methods = {
     const { timeframe } = dataset;
 
     const indicator = queue.get(setId);
-    indicator.draw = plot_types.getIndicatorById(indicator.id).draw;
 
     indicator.dataset = dataset;
     indicator.model = dataModel;
@@ -190,14 +189,15 @@ const methods = {
       let data = dataset.data[iteratedTime];
       if (data === undefined || data === null) continue;
 
-      if (
-        indicator.dependencies[0] === "value" &&
-        indicator.model.model === "ohlc"
-      ) {
+      const { dependencies, draw } = plot_types.getIndicatorById(
+        indicator.indicatorId
+      );
+
+      if (dependencies[0] === "value" && indicator.model.model === "ohlc") {
         data = { value: data.close };
       }
 
-      indicator.draw({
+      draw.bind({ color: indicator.color })({
         ...data,
         ...funcWraps,
         math,

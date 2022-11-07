@@ -68,7 +68,7 @@ export function TimeScales(pixelsPerElement, timeframe, start, end, width) {
   return scales;
 }
 
-export function PriceScales(yRanges, dimensions, sets) {
+export function PriceScales(yRanges, dimensions, sets, yLabels) {
   const scales = {};
 
   for (const id in yRanges) {
@@ -116,7 +116,7 @@ export function PriceScales(yRanges, dimensions, sets) {
     }
 
     // Generate yLabel plots
-    for (let [value, dataset, color, set] of layer.yLabels) {
+    for (let [value, dataset, color, set] of yLabels[id]) {
       color = `rgba(${color[0] * 255},${color[1] * 255},${color[2] * 255}, ${
         color[3] * 255
       })`;

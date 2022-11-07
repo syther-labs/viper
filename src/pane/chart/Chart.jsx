@@ -13,6 +13,7 @@ import global from "../../global";
 import plot_types from "./data/plot_types";
 import { PriceScales, TimeScales } from "./workers/generators";
 import { batch } from "solid-js";
+import { copyReactiveState } from "../../stores/storage";
 
 /**
  * Create a new chart
@@ -36,7 +37,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
   // Presistent state
   state: {
     timeframe: v(timeframe),
-    name: v("Binance Relative Comparison"),
+    name: v("Untitled chart"),
     plots: v([]),
     indicators: v({}),
 
@@ -79,6 +80,11 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
   on(event, data) {
     // On mounted to HTML
     if (event === "mounted") {
+      setTimeout(
+        () => console.log(copyReactiveState("chart", this.state)),
+        1000
+      );
+
       this.dimensions = dimensions({ $chart: this });
       this.workers = workers({ $chart: this });
       this.workers.init();
@@ -206,15 +212,17 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
       const minTime = start - (start % timeframe) - this.anchorTime;
       const maxTime = end + timeframe - (end % timeframe) - this.anchorTime;
 
+      const yLabels = {};
+
       // Loop through all layers
-      for (const id in yRanges) {
-        const { scaleType, lockedYScale, indicatorIds } = yRanges[id].get();
+      for (const layerId in yRanges) {
+        const { scaleType, lockedYScale, indicatorIds } =
+          yRanges[layerId].get();
 
         // Loop through all sets and update data buffers with updated data
         const minsAndMaxs = [];
 
-        // Build array of all yLabel plots
-        const yLabels = [];
+        yLabels[layerId] = [];
 
         // Loop through all indicators in layer
         for (const indicatorId of indicatorIds) {
@@ -281,7 +289,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
                 value = ((value - set.first) / Math.abs(set.first)) * 100;
               }
 
-              yLabels.push([value, dataset, config.colors.color, set]);
+              yLabels[layerId].push([value, dataset, config.colors.color, set]);
             }
           }
         }
@@ -295,10 +303,9 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
           min -= range5P;
           max += range5P;
 
-          yRanges[id].set(v => ({
+          yRanges[layerId].set(v => ({
             ...v,
             range: { min, max },
-            yLabels,
           }));
         }
       }
@@ -316,7 +323,9 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
         )
       );
 
-      this.scales.price.set(PriceScales(yRanges, this.dimensions, this.sets));
+      this.scales.price.set(
+        PriceScales(yRanges, this.dimensions, this.sets, yLabels)
+      );
 
       /// OLD CODE BEYOND
 
@@ -444,7 +453,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     const setId = uniqueId();
 
     indicator = v({
-      ...indicator,
+      indicatorId: indicator.id,
       setId,
       renderingQueueId: setId,
       color: utils.randomRGBAColor(),

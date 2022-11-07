@@ -8,6 +8,7 @@ import App from "./src/App";
 import global from "./src/global";
 import ui, { createNewWindow } from "./src/stores/ui";
 import contextmenu from "./src/stores/ui/contextmenu";
+import Storage from "./src/stores/storage";
 
 export default class Viper {
   /**
@@ -22,6 +23,7 @@ export default class Viper {
     global.dataModels = dataModels;
     global.sources = sources;
     global.requestData = requestData;
+    global.storage = new Storage();
 
     render(() => <App />, element);
 
@@ -32,6 +34,7 @@ export default class Viper {
     keybinds.init();
     ui.init();
     contextmenu.init();
+    global.storage.init();
 
     // Define all keybinds
     // TODO move to separate file
@@ -71,5 +74,6 @@ export default class Viper {
     keybinds.destroy();
     ui.destroy();
     contextmenu.destroy();
+    global.storage.destroy();
   }
 }
