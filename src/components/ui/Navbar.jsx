@@ -44,7 +44,7 @@ export default function Navbar() {
         })}
         <button
           disabled
-          onClick={[createPane, Chart]}
+          onClick={() => createPane(Chart)}
           className="bg-primary h-12 w-12"
         >
           <i class="ri-add-line text-xl"></i>

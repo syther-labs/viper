@@ -36,7 +36,7 @@ function NoPanes() {
         <Button
           variant="primary-outline"
           size="md"
-          onClick={[createPane, Chart]}
+          onClick={() => createPane(Chart)}
         >
           Add a pane
           <span className="inline-block opacity-75 text-xs ml-2">

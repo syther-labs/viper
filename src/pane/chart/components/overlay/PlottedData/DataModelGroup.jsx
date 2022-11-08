@@ -3,16 +3,16 @@ import Indicator from "./Indicator";
 import ItemWithControls from "./ItemWithControls";
 
 export default function DatasetGroup(props) {
-  const { $chart, index } = props;
-  const dataModelGroup = $chart.state.plots.get()[index];
+  const { $chart, id } = props;
+  const dataModelGroup = $chart.state.plots.get()[id];
 
   function onToggleVisible() {
     const { visible } = dataModelGroup.get();
-    $chart.setDatasetVisibility(index, !visible);
+    $chart.setDatasetVisibility(id, !visible);
   }
 
   function onRemove() {
-    $chart.removePlot(index);
+    $chart.removePlot(id);
   }
 
   const datasetName = () => {

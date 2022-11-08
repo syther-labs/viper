@@ -1,6 +1,7 @@
 import Dexie from "dexie";
 import { v } from "../api/api";
-import { panes } from "./panes";
+import chart from "../pane/chart";
+import { createPane, panes } from "./panes";
 
 export default class Storage {
   constructor() {
@@ -19,8 +20,35 @@ export default class Storage {
     this._interval = null;
   }
 
-  init() {
+  async init() {
     this._interval = setInterval(this.snapshotState.bind(this), 5000);
+
+    // Load storage locally
+    let config = localStorage.getItem("config");
+    if (config) {
+      config = JSON.parse(config);
+      this.config.set(config);
+
+      // Load template by id if exists
+      const template = await this.db.templates
+        .where("id")
+        .equals(config.activeTemplateId)
+        .toArray();
+
+      // Create a new pane for each pane
+      if (template && template[0]) {
+        for (const pane of template[0].config.panes) {
+          switch (pane.type) {
+            case "chart":
+              createPane(chart, {
+                pos: pane.pos,
+                state: pane.state,
+              });
+              break;
+          }
+        }
+      }
+    }
   }
 
   async save(id, name, config) {
@@ -71,8 +99,6 @@ export default class Storage {
       });
     }
 
-    console.log(snapshot.panes);
-
     // Save template to IndexedDB
     this.save(config.activeTemplateId, "Untitled template 1", {
       panes: snapshot.panes,
@@ -88,22 +114,25 @@ export default class Storage {
 }
 
 export function copyReactiveState(type, state) {
-  let parentKey;
-
   const convertObj = obj => {
-    obj = { ...obj };
+    if (Array.isArray(obj)) obj = [...obj];
+    else obj = { ...obj };
 
     // Loop through every paramater in object
     for (const key in obj) {
       // If object has get and set method
       const { get } = obj[key];
 
+      if (key === "indicatorIds") {
+        obj[key] = [];
+        continue;
+      }
+
       if (typeof get === "function") {
         obj[key] = get();
       }
 
       if (typeof obj[key] === "object") {
-        parentKey = key;
         obj[key] = convertObj(obj[key]);
       }
     }

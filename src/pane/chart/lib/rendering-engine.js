@@ -54,7 +54,7 @@ export default class RenderingEngine {
       for (const setId of indicatorIds) {
         const set = this.$chart.sets[setId];
 
-        if (!set.times.length) continue;
+        if (!set?.times?.length) continue;
 
         const { color } = this.$chart.state.indicators.get()[setId].get();
 

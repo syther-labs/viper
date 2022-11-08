@@ -30,11 +30,13 @@ export default class Viper {
     this.init();
   }
 
-  init() {
+  async init() {
+    // Initialize local storage first
+    await global.storage.init();
+
     keybinds.init();
     ui.init();
     contextmenu.init();
-    global.storage.init();
 
     // Define all keybinds
     // TODO move to separate file

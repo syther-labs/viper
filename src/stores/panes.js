@@ -15,10 +15,15 @@ export const panes = v({});
 export const activePane = createMemo(() => panes.get()[activePaneId.get()]);
 export const gridEdit = v(false);
 
-export function createPane(Pane) {
+export function createPane(
+  Pane,
+  options = {
+    pos: { w: 12, h: 6 },
+  }
+) {
   const id = uniqueId();
 
-  const gridItem = grid.addWidget({ w: 12, h: 6 });
+  const gridItem = grid.addWidget(options.pos);
   const element = gridItem.querySelector(".grid-stack-item-content");
   gridItem.addEventListener("click", () => activePaneId.set(id));
 
@@ -64,7 +69,7 @@ export function createPane(Pane) {
 
   updatePanePositions([gridItem]);
 
-  app.on("mounted");
+  app.on("mounted", options.state);
 
   // Set active pane to newly created pane
   activePaneId.set(pane.get().id);
@@ -183,8 +188,6 @@ export default {
 
     grid.enableMove(false);
     grid.enableResize(false);
-
-    createPane(chart);
   },
 
   destroy() {

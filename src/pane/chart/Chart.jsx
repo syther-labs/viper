@@ -9,11 +9,10 @@ import { v } from "../../api/api";
 import dimensions from "./local-state/dimensions";
 import workers from "./workers/workers.js";
 import _, { uniqueId } from "lodash";
-import global from "../../global";
 import plot_types from "./data/plot_types";
 import { PriceScales, TimeScales } from "./workers/generators";
 import { batch } from "solid-js";
-import { copyReactiveState } from "../../stores/storage";
+import global from "../../global";
 
 /**
  * Create a new chart
@@ -38,7 +37,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
   state: {
     timeframe: v(timeframe),
     name: v("Untitled chart"),
-    plots: v([]),
+    plots: v({}),
     indicators: v({}),
 
     ranges: {
@@ -80,11 +79,6 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
   on(event, data) {
     // On mounted to HTML
     if (event === "mounted") {
-      setTimeout(
-        () => console.log(copyReactiveState("chart", this.state)),
-        1000
-      );
-
       this.dimensions = dimensions({ $chart: this });
       this.workers = workers({ $chart: this });
       this.workers.init();
@@ -98,23 +92,45 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
       const timeframe = this.state.timeframe.get();
       this.anchorTime = now - (now % timeframe) - timeframe * 500;
 
+      // If data is defined, it's the state object
+      if (data) {
+        batch(() => {
+          this.state.timeframe.set(data.timeframe);
+          this.state.name.set(data.name);
+
+          // Create all ranges
+          Object.values(data.ranges.y).forEach(this.addLayer.bind(this));
+
+          // Create all plots
+          setTimeout(() => {
+            batch(() => {
+              for (const id in data.plots) {
+                data.plots[id] = v(data.plots[id]);
+              }
+              this.state.plots.set(data.plots);
+
+              // Add all indicators
+              for (const id in data.indicators) {
+                const indicator = data.indicators[id];
+
+                this.addIndicator(
+                  plot_types.getIndicatorById(indicator.indicatorId),
+                  this.state.plots.get()[indicator.plotId],
+                  indicator.model,
+                  indicator
+                );
+              }
+            });
+          });
+        });
+      }
+
       // If no ranges, create a default one
       if (!Object.keys(this.state.ranges.y.get()).length) {
-        this.addLayer(10);
+        this.addLayer({ heightUnit: 10 });
       }
 
       render(() => <App $chart={this} />, this.element);
-
-      // TEMP add
-      for (const source in global.sources) {
-        for (const name in global.sources[source]) {
-          // Add a plot for each set
-          const plot = this.createDataModelGroup({ source, name });
-
-          // Add indicator for each
-          this.addIndicator(plot_types.bases.line, plot, "price", {});
-        }
-      }
     }
 
     // On master fire resize
@@ -141,7 +157,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
       for (const setId in this.state.indicators.get()) {
         const indicator = this.state.indicators.get()[setId].get();
 
-        const plot = indicator.plot.get();
+        const plot = this.state.plots.get()[indicator.plotId].get();
 
         if (plot.dataset.source === source && plot.dataset.name === name) {
           // Calcualte new data
@@ -226,8 +242,8 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
 
         // Loop through all indicators in layer
         for (const indicatorId of indicatorIds) {
-          const { visible, model, plot } = indicators[indicatorId].get();
-          const { dataset } = plot.get();
+          const { visible, model, plotId } = indicators[indicatorId].get();
+          const { dataset } = this.state.plots.get()[plotId].get();
 
           const set = this.sets[indicatorId];
 
@@ -332,7 +348,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
       // Fire request for any missing data
       for (const setId in this.state.indicators.get()) {
         const indicator = this.state.indicators.get()[setId].get();
-        const plot = indicator.plot.get();
+        const plot = this.state.plots.get()[indicator.plotId].get();
 
         const { source, name } = plot.dataset;
 
@@ -411,53 +427,57 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     this.setInitialVisibleRange();
   },
 
-  createDataModelGroup({ source, name }) {
+  createDataModelGroup(state = {}) {
     const plot = v({
+      id: utils.uniqueId(),
       type: "DataModelGroup",
       visible: true,
-      dataset: {
-        source,
-        name,
-      },
+      dataset: {},
       indicatorIds: [],
+      ...state,
     });
 
-    this.state.plots.set([...this.state.plots.get(), plot]);
+    const { id } = plot.get();
+    this.state.plots.set(v => ({ ...v, [id]: plot }));
 
     return plot;
   },
 
-  setDatasetVisibility(index, visible) {
+  setDatasetVisibility(id, visible) {
     // Get the dataset from plot map
-    const dataset = this.state.plots.get()[index];
+    const plot = this.state.plots.get()[id];
 
     // Loop through all indicators and set their visibility
-    for (const indicatorId of dataset.get().indicatorIds) {
+    for (const indicatorId of plot.get().indicatorIds) {
       this.setIndicatorVisibility(indicatorId, visible);
     }
 
     // Set the dataset visibility
-    dataset.set(v => ({ ...v, visible }));
+    plot.set(v => ({ ...v, visible }));
   },
 
   async addIndicator(
     indicator,
     plot,
     model,
-    { visible = true, layerId = Object.keys(this.state.ranges.y.get())[0] }
+    {
+      setId,
+      visible = true,
+      layerId = Object.keys(this.state.ranges.y.get())[0],
+    }
   ) {
     if (!layerId || !this.state.ranges.y.get()[layerId]) {
-      layerId = this.addLayer(3);
+      layerId = this.addLayer({ heightUnit: 3 });
     }
 
-    const setId = uniqueId();
+    if (!setId) setId = uniqueId();
 
     indicator = v({
       indicatorId: indicator.id,
       setId,
       renderingQueueId: setId,
       color: utils.randomRGBAColor(),
-      plot,
+      plotId: plot.get().id,
       model,
       visible,
       layerId,
@@ -557,6 +577,7 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
       v.indicatorIds.splice(i, 1);
       return { ...v };
     });
+    ``;
 
     // Delete from indicators store
     this.state.indicators.set(v => {
@@ -568,30 +589,33 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     this.workers.generateAllInstructions();
   },
 
-  removePlot(index) {
+  removePlot(id) {
     const plots = this.state.plots.get();
 
-    for (const setId of plots[index].get().indicatorIds) {
+    for (const setId of plots[id].get().indicatorIds) {
       this.removeIndicator(this.state.indicators.get()[setId]);
     }
 
-    plots.splice(index, 1);
-    this.state.plots.set([...plots]);
+    this.state.plots.set(v => {
+      delete v[id];
+      return v;
+    });
   },
 
-  addLayer(heightUnit) {
-    const id = utils.uniqueId();
-
+  addLayer(state = {}) {
     const layer = v({
-      id,
-      heightUnit,
+      id: uniqueId(),
+      heightUnit: 10,
       lockedYScale: true,
       visible: true,
       fullscreen: false,
       scaleType: 1,
       indicatorIds: [],
       range: { min: Infinity, max: -Infinity },
+      ...state,
     });
+
+    const { id } = layer.get();
 
     this.state.ranges.y.set(v => ({
       ...v,
