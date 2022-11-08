@@ -70,6 +70,8 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
     price: v(document.createElement("div")),
   },
   anchorTime: 0,
+  lockedViewport: false,
+  yLabels: {},
 
   /**
    * On parent emitted events
@@ -202,6 +204,8 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
       const layer = yRanges[layerId].get();
       const yRange = layer.range;
 
+      const timeframe = this.state.timeframe.get();
+
       let {
         start = xRange.start,
         end = xRange.end,
@@ -222,111 +226,121 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
         }));
       }
 
+      this.state.pixelsPerElement.set(width / ((end - start) / timeframe));
+
       const indicators = this.state.indicators.get();
-      const timeframe = this.state.timeframe.get();
 
       const minTime = start - (start % timeframe) - this.anchorTime;
       const maxTime = end + timeframe - (end % timeframe) - this.anchorTime;
 
-      const yLabels = {};
-
       // Loop through all layers
-      for (const layerId in yRanges) {
-        const { scaleType, lockedYScale, indicatorIds } =
-          yRanges[layerId].get();
+      if (!this.lockedViewport) {
+        const yLabels = {};
 
-        // Loop through all sets and update data buffers with updated data
-        const minsAndMaxs = [];
+        for (const layerId in yRanges) {
+          const { scaleType, lockedYScale, indicatorIds } =
+            yRanges[layerId].get();
 
-        yLabels[layerId] = [];
+          // Loop through all sets and update data buffers with updated data
+          const minsAndMaxs = [];
 
-        // Loop through all indicators in layer
-        for (const indicatorId of indicatorIds) {
-          const { visible, model, plotId } = indicators[indicatorId].get();
-          const { dataset } = this.state.plots.get()[plotId].get();
+          yLabels[layerId] = [];
 
-          const set = this.sets[indicatorId];
+          // Loop through all indicators in layer
+          for (const indicatorId of indicatorIds) {
+            const { visible, model, plotId } = indicators[indicatorId].get();
+            const { dataset } = this.state.plots.get()[plotId].get();
 
-          if (!visible) continue;
+            const set = this.sets[indicatorId];
 
-          let i = Math.max(set.times.indexOf(minTime), 0);
-          let j = set.times.indexOf(maxTime);
-          if (j === -1) j = set.times.length - 1;
+            if (!visible) continue;
 
-          // Set times to array of times in viewport
-          set.buffers.times(set.times.slice(i, j + 1));
+            let i = Math.max(set.times.indexOf(minTime), 0);
+            let j = set.times.indexOf(maxTime);
+            if (j === -1) j = set.times.length - 1;
 
-          // Clear the first point in set
-          set.first = undefined;
+            // Set times to array of times in viewport
+            set.buffers.times(set.times.slice(i, j + 1));
 
-          for (const id in set.configs) {
-            const config = set.configs[id];
+            // Clear the first point in set
+            set.first = undefined;
 
-            const l = config.length;
-            const data = set.data[id].slice(i * l, j * l + 1);
+            for (const id in set.configs) {
+              const config = set.configs[id];
 
-            if (set.first === undefined) set.first = data[0];
+              const l = config.length;
+              const data = set.data[id].slice(i * l, j * l + 1);
 
-            // If no buffer exists for this set config, create it
-            if (!set.buffers.data[id]) {
-              set.buffers.data[id] = {
-                config,
-                length: 0,
-                buffer: this.regl.buffer([]),
-              };
-            }
+              if (set.first === undefined) set.first = data[0];
 
-            set.buffers.data[id].length = data.length;
-            set.buffers.data[id].buffer(data);
-
-            // Calcuate set min's and max's + visible min's and max'x
-            set.min = Math.min.apply(this, data);
-            set.max = Math.max.apply(this, data);
-
-            let visibleMin = set.min;
-            let visibleMax = set.max;
-
-            if (scaleType === 2) {
-              visibleMin = 0;
-              visibleMax = 100;
-            } else if (scaleType === 1) {
-              visibleMin = ((set.min - set.first) / Math.abs(set.first)) * 100;
-              visibleMax = ((set.max - set.first) / Math.abs(set.first)) * 100;
-            }
-
-            set.visibleMin = visibleMin;
-            set.visibleMax = visibleMax;
-            minsAndMaxs.push(visibleMin, visibleMax);
-
-            if (config.yLabel) {
-              let value = data[data.length - 1];
-
-              if (scaleType === 1) {
-                value = ((value - set.first) / Math.abs(set.first)) * 100;
+              // If no buffer exists for this set config, create it
+              if (!set.buffers.data[id]) {
+                set.buffers.data[id] = {
+                  config,
+                  length: 0,
+                  buffer: this.regl.buffer([]),
+                };
               }
 
-              yLabels[layerId].push([value, dataset, config.colors.color, set]);
+              set.buffers.data[id].length = data.length;
+              set.buffers.data[id].buffer(data);
+
+              // Calcuate set min's and max's + visible min's and max'x
+              set.min = Math.min.apply(this, data);
+              set.max = Math.max.apply(this, data);
+
+              let visibleMin = set.min;
+              let visibleMax = set.max;
+
+              if (scaleType === 2) {
+                visibleMin = 0;
+                visibleMax = 100;
+              } else if (scaleType === 1) {
+                visibleMin =
+                  ((set.min - set.first) / Math.abs(set.first)) * 100;
+                visibleMax =
+                  ((set.max - set.first) / Math.abs(set.first)) * 100;
+              }
+
+              set.visibleMin = visibleMin;
+              set.visibleMax = visibleMax;
+              minsAndMaxs.push(visibleMin, visibleMax);
+
+              if (config.yLabel) {
+                let value = data[data.length - 1];
+
+                if (scaleType === 1) {
+                  value = ((value - set.first) / Math.abs(set.first)) * 100;
+                }
+
+                yLabels[layerId].push([
+                  value,
+                  dataset,
+                  config.colors.color,
+                  set,
+                ]);
+              }
             }
+          }
+
+          // If yScale is locked, apply min and max bounds
+          if (lockedYScale) {
+            let min = Math.min.apply(this, minsAndMaxs);
+            let max = Math.max.apply(this, minsAndMaxs);
+
+            const range5P = (max - min) * 0.05;
+            min -= range5P;
+            max += range5P;
+
+            yRanges[layerId].set(v => ({
+              ...v,
+              range: { min, max },
+            }));
           }
         }
 
-        // If yScale is locked, apply min and max bounds
-        if (lockedYScale) {
-          let min = Math.min.apply(this, minsAndMaxs);
-          let max = Math.max.apply(this, minsAndMaxs);
-
-          const range5P = (max - min) * 0.05;
-          min -= range5P;
-          max += range5P;
-
-          yRanges[layerId].set(v => ({
-            ...v,
-            range: { min, max },
-          }));
-        }
+        this.yLabels = yLabels;
       }
-
-      this.state.pixelsPerElement.set(width / ((end - start) / timeframe));
 
       // Regenerate TimeScales and PriceScales
       this.scales.time.set(
@@ -340,26 +354,29 @@ export default ({ element, timeframe = 3.6e6, config = {}, $api }) => ({
       );
 
       this.scales.price.set(
-        PriceScales(yRanges, this.dimensions, this.sets, yLabels)
+        PriceScales(yRanges, this.dimensions, this.sets, this.yLabels)
       );
 
       /// OLD CODE BEYOND
 
       // Fire request for any missing data
-      for (const setId in this.state.indicators.get()) {
-        const indicator = this.state.indicators.get()[setId].get();
-        const plot = this.state.plots.get()[indicator.plotId].get();
+      // TODO FIXED THIS UNOPTIMIED PEICE OF SHIT
+      if (!this.lockedViewport) {
+        for (const setId in this.state.indicators.get()) {
+          const indicator = this.state.indicators.get()[setId].get();
+          const plot = this.state.plots.get()[indicator.plotId].get();
 
-        const { source, name } = plot.dataset;
+          const { source, name } = plot.dataset;
 
-        this.$api.getDataPointsIfNotPresent({
-          source,
-          name,
-          timeframe: this.state.timeframe.get(),
-          modelId: indicator.model,
-          start,
-          end,
-        });
+          this.$api.getDataPointsIfNotPresent({
+            source,
+            name,
+            timeframe: this.state.timeframe.get(),
+            modelId: indicator.model,
+            start,
+            end,
+          });
+        }
       }
     });
   },

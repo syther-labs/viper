@@ -8,7 +8,14 @@ import { createSignal } from "solid-js";
  */
 export const v = v => {
   const [get, set] = createSignal(v);
-  return { get, set };
+
+  return {
+    get,
+    set,
+    setProperty(key, value) {
+      set(v => ({ ...v, [key]: value }));
+    },
+  };
 };
 
 export default class API {

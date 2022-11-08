@@ -137,6 +137,21 @@ export default param0 => ({
           ],
         };
       },
+
+      xScale: (chart, e) => {
+        return {
+          title: chart.state.name.get(),
+          config: [
+            {
+              type: "button",
+              text: chart.lockedViewport ? "Unlock viewport" : "Lock viewport",
+              onClick: () => {
+                chart.lockedViewport = !chart.lockedViewport;
+              },
+            },
+          ],
+        };
+      },
     };
   },
 });

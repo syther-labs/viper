@@ -45,6 +45,7 @@ body {
   border: 1px solid transparent;
   /* TODO TEMP */
   height: 100% !important;
+  width: 100% !important;
 }
 
 .grid-stack .grid-stack-item-content {

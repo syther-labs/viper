@@ -25,6 +25,14 @@ export default class Viper {
     global.requestData = requestData;
     global.storage = new Storage();
 
+    // Check if pathname contains a /+ and set the template id
+    if (window.location.pathname.startsWith("/+")) {
+      global.storage.config.setProperty(
+        "activeTemplateId",
+        window.location.pathname.substring(2)
+      );
+    }
+
     render(() => <App />, element);
 
     this.init();
