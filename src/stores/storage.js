@@ -112,8 +112,6 @@ export default class Storage {
       panes: snapshot.panes,
     });
 
-    console.log(snapshot);
-
     // Save global config to LocalStorage
     localStorage.setItem("config", JSON.stringify(config));
   }
@@ -154,7 +152,6 @@ export function copyReactiveState(type, state) {
 }
 
 function loadTemplateConfig(template) {
-  console.log(template);
   for (const pane of template.config.panes) {
     switch (pane.type) {
       case "chart":
